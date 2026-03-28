@@ -901,43 +901,42 @@ function Dashboard({ session }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'transparent' }}>
-      {/* Header */}
-      <header className="glass-header" style={{
-        background: 'var(--surface)', borderBottom: '1px solid var(--border)',
-        padding: '16px 24px', position: 'sticky', top: 0, zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      {/* Header flutuante estilo Liquid Glass */}
+      <header style={{
+        padding: '14px 20px', position: 'sticky', top: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'transparent',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Avatar clicável */}
+        {/* Grupo esquerdo: avatar + título + nome */}
+        <div className="glass" style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'var(--surface)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 50, padding: '7px 16px 7px 7px',
+        }}>
           <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
           <div
             onClick={() => avatarInputRef.current?.click()}
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
-            title="Clique para alterar foto de perfil"
+            title="Alterar foto"
             style={{
-              width: 38, height: 38, borderRadius: '50%',
-              overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
-              border: '2px solid var(--border)',
+              width: 34, height: 34, borderRadius: '50%', overflow: 'hidden',
+              cursor: 'pointer', flexShrink: 0, position: 'relative',
               background: avatarUrl ? 'transparent' : 'var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', transition: 'border-color 0.2s',
-              borderColor: avatarHover ? 'var(--accent)' : 'var(--border)',
             }}
           >
             {avatarUrl
               ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <span style={{ color: '#fff', fontSize: 15, fontWeight: 700, userSelect: 'none' }}>{userName.charAt(0).toUpperCase()}</span>
+              : <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, userSelect: 'none' }}>{userName.charAt(0).toUpperCase()}</span>
             }
             {avatarHover && (
-              <div style={{
-                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-              }}>📷</div>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>📷</div>
             )}
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>Dashboard</div>
+            <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2 }}>Dashboard</div>
             {editingName ? (
               <input
                 ref={nameInputRef}
@@ -946,50 +945,48 @@ function Dashboard({ session }) {
                 onBlur={handleNameSave}
                 onKeyDown={e => { if (e.key === 'Enter') handleNameSave(); if (e.key === 'Escape') { setNameInput(displayName); setEditingName(false) } }}
                 autoFocus
-                style={{
-                  fontSize: 11, color: 'var(--text)', background: 'var(--surface2)',
-                  border: '1px solid var(--accent)', borderRadius: 4,
-                  padding: '1px 6px', outline: 'none', width: 140,
-                }}
+                style={{ fontSize: 11, color: 'var(--text)', background: 'transparent', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', width: 120, padding: '1px 0' }}
               />
             ) : (
-              <div
-                onClick={() => { setNameInput(displayName); setEditingName(true) }}
-                title="Clique para editar seu nome"
-                style={{
-                  fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}
-              >
+              <div onClick={() => { setNameInput(displayName); setEditingName(true) }} title="Editar nome"
+                style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, lineHeight: 1.3 }}>
                 {displayName}
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.45 }}>
                   <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
               </div>
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+        {/* Grupo direito: nova tarefa + logout */}
+        <div className="glass" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'var(--surface)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 50, padding: '6px',
+        }}>
           <button
             onClick={() => { setEditingTask(null); setShowModal(true) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 16px', background: 'var(--accent)', border: 'none',
-              borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 13, fontWeight: 600
+              padding: '7px 16px', background: 'var(--accent)', border: 'none',
+              borderRadius: 50, color: '#fff', fontSize: 13, fontWeight: 600,
             }}
           >
-            <Icon name="plus" size={16} color="#fff" />
+            <Icon name="plus" size={15} color="#fff" />
             Nova tarefa
           </button>
           <button
             onClick={handleLogout}
             title="Sair"
             style={{
-              padding: '8px 10px', background: 'var(--surface2)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center'
+              width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--surface2)', border: '1px solid var(--glass-border)',
+              borderRadius: '50%', color: 'var(--text-muted)',
             }}
           >
-            <Icon name="logout" size={16} />
+            <Icon name="logout" size={15} />
           </button>
         </div>
       </header>
@@ -999,7 +996,12 @@ function Dashboard({ session }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <button
             onClick={() => setSelectedDate(d => addDays(d, -1))}
-            style={{ padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)' }}
+            className="glass"
+            style={{
+              width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--surface)', border: '1px solid var(--glass-border)',
+              borderRadius: '50%', color: 'var(--text-muted)',
+            }}
           >
             <Icon name="chevLeft" size={18} />
           </button>
@@ -1025,7 +1027,12 @@ function Dashboard({ session }) {
 
           <button
             onClick={() => setSelectedDate(d => addDays(d, 1))}
-            style={{ padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)' }}
+            className="glass"
+            style={{
+              width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--surface)', border: '1px solid var(--glass-border)',
+              borderRadius: '50%', color: 'var(--text-muted)',
+            }}
           >
             <Icon name="chevRight" size={18} />
           </button>
