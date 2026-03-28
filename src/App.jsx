@@ -349,7 +349,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer' }}>
@@ -752,6 +752,7 @@ const OnboardingScreen = ({ session, onComplete }) => {
 // ─── Realocar Modal ───────────────────────────────────────────────────────────
 const ReallocateModal = ({ task, onMove, onClose }) => {
   const [customDate, setCustomDate] = useState('')
+  const dateInputRef = useRef(null)
   const quickOptions = [
     { label: 'Amanhã', date: addDays(today(), 1) },
     { label: 'Em 2 dias', date: addDays(today(), 2) },
@@ -767,7 +768,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
-        borderRadius: 'var(--radius)', padding: 28,
+        borderRadius: 'var(--modal-radius)', padding: 28,
         width: '100%', maxWidth: 380,
         boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
         animation: 'slideUpToast 0.2s ease',
@@ -812,9 +813,16 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
 
         {/* Custom date */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <input type="date" value={customDate} min={addDays(today(), 1)} onChange={e => setCustomDate(e.target.value)}
-            style={{ flex: 1, padding: '10px 14px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }}
-          />
+          <div style={{ flex: 1, position: 'relative' }} onClick={() => { try { dateInputRef.current?.showPicker() } catch(e) { dateInputRef.current?.focus() } }}>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={customDate}
+              min={addDays(today(), 1)}
+              onChange={e => setCustomDate(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+            />
+          </div>
           <button onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }} disabled={!customDate}
             style={{
               padding: '10px 20px', borderRadius: 'var(--radius-sm)',
@@ -878,7 +886,7 @@ const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
-        borderRadius: 'var(--radius)', padding: '32px 28px 24px',
+        borderRadius: 'var(--modal-radius)', padding: '32px 28px 24px',
         maxWidth: 360, width: '90%', textAlign: 'center',
         boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease',
       }}>
