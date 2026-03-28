@@ -99,12 +99,11 @@ const LoginScreen = () => {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 56, height: 56, background: 'var(--accent)', borderRadius: 16,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-          }}>
-            <Icon name="sun" size={28} color="#fff" />
-          </div>
+          <img
+            src="/dashboard-beza/favicon.png"
+            alt="Dashboard"
+            style={{ width: 80, height: 80, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }}
+          />
           <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Dashboard</div>
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
             {mode === 'login' ? 'Acesse sua conta' : mode === 'signup' ? 'Crie sua conta' : 'Recuperar senha'}
@@ -574,9 +573,7 @@ const OnboardingScreen = ({ session, onComplete }) => {
 
         {/* Cabeçalho */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 52, height: 52, background: 'var(--accent)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <Icon name="sun" size={26} color="#fff" />
-          </div>
+          <img src="/dashboard-beza/favicon.png" alt="Dashboard" style={{ width: 72, height: 72, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Bem-vindo ao Dashboard!</div>
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Configure seu perfil antes de começar</div>
         </div>
