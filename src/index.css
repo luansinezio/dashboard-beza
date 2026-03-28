@@ -18,7 +18,8 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --radius: 14px;
-  --radius-sm: 10px;
+  --radius-sm: 50px;
+  --radius-input: 12px;
 
   /* Glass tokens */
   --glass-blur: blur(28px) saturate(160%);
