@@ -20,6 +20,22 @@
   --radius-sm: 8px;
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface2: #ededf5;
+    --border: #d8d8e8;
+    --text: #1a1a2e;
+    --text-muted: #7070a0;
+    --accent: #7c5cfc;
+    --accent-light: #9b7dfd;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+  }
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
