@@ -1177,6 +1177,8 @@ const TrialSignupScreen = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
   const [showPass, setShowPass] = useState(false)
+  const [btnHover, setBtnHover] = useState(false)
+  const [googleHover, setGoogleHover] = useState(false)
 
   const handleTrial = async (e) => {
     e.preventDefault()
@@ -1198,9 +1200,24 @@ const TrialSignupScreen = () => {
     if (error) {
       setMessage({ type: 'error', text: error.message.includes('already') ? 'Este e-mail já tem um teste ativo. Faça login abaixo.' : error.message })
     } else {
-      setMessage({ type: 'success', text: 'Conta de teste criada! Entrando...' })
+      setMessage({ type: 'success', text: 'Conta criada! Entrando...' })
     }
     setLoading(false)
+  }
+
+  const handleGoogleTrial = async () => {
+    setLoading(true)
+    localStorage.setItem('trial_signup', '1')
+    localStorage.setItem('trial_started_at', new Date().toISOString())
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname + '?trial=1' },
+    })
+    if (error) {
+      setMessage({ type: 'error', text: 'Erro ao entrar com Google.' })
+      localStorage.removeItem('trial_signup')
+      setLoading(false)
+    }
   }
 
   const handleLogin = async () => {
@@ -1211,19 +1228,21 @@ const TrialSignupScreen = () => {
     setLoading(false)
   }
 
+  const inputStyle = { width: '100%', padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/dashboard-beza/favicon.png" alt="" style={{ width: 72, height: 72, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
-          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Teste gratuito — 24h</div>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Crie suas tarefas e explore o Dashboard por um dia, sem compromisso.</div>
+          <img src="/dashboard-beza/favicon.png" alt="" style={{ width: 68, height: 68, margin: '0 auto 18px', display: 'block', objectFit: 'contain' }} />
+          <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, letterSpacing: -0.5 }}>Organize o caos por um dia.</div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5 }}>Veja o efeito de ter tudo no lugar.<br />Um dia grátis, sem cartão, sem compromisso.</div>
         </div>
 
-        {/* Badge de trial */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
-          {['⏱ 24 horas', '✓ Acesso completo', '✓ Sem cartão'].map(t => (
-            <span key={t} style={{ fontSize: 11, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 50, padding: '4px 10px', color: 'var(--text-muted)' }}>{t}</span>
+        {/* Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
+          {['24 horas grátis', 'Acesso completo', 'Sem cartão'].map(t => (
+            <span key={t} style={{ fontSize: 11, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 50, padding: '4px 12px', color: 'var(--text-muted)' }}>{t}</span>
           ))}
         </div>
 
@@ -1236,35 +1255,81 @@ const TrialSignupScreen = () => {
               {message.text}
             </div>
           )}
+
+          {/* Google OAuth */}
+          <button
+            type="button"
+            onClick={handleGoogleTrial}
+            disabled={loading}
+            onMouseEnter={() => setGoogleHover(true)}
+            onMouseLeave={() => setGoogleHover(false)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '11px 16px',
+              background: googleHover ? 'var(--surface2)' : 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text)', fontSize: 14, fontWeight: 600,
+              cursor: 'pointer', marginBottom: 16,
+              transition: 'background 0.15s, transform 0.15s',
+              transform: googleHover ? 'scale(1.015)' : 'scale(1)',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Começar com Google
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ou com e-mail</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+
           <form onSubmit={handleTrial} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
               <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>SEU NOME</label>
-              <input autoFocus value={name} onChange={e => setName(e.target.value)} required placeholder="Como você se chama?"
-                style={{ width: '100%', padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+              <input autoFocus value={name} onChange={e => setName(e.target.value)} required placeholder="Como você se chama?" style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>E-MAIL</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com"
-                style={{ width: '100%', padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>SENHA</label>
               <div style={{ position: 'relative' }}>
                 <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres"
-                  style={{ width: '100%', padding: '10px 40px 10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+                  style={{ ...inputStyle, padding: '10px 40px 10px 14px' }} />
                 <button type="button" onClick={() => setShowPass(v => !v)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2 }}>
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2, cursor: 'pointer' }}>
                   <Icon name={showPass ? 'eyeOff' : 'eye'} size={15} />
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={loading || !name.trim() || !email.trim() || !password.trim()}
-              style={{ padding: '12px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 14, fontWeight: 700, marginTop: 4, opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Criando acesso...' : '🚀 Começar meu teste gratuito'}
+            <button
+              type="submit"
+              disabled={loading || !name.trim() || !email.trim() || !password.trim()}
+              onMouseEnter={() => setBtnHover(true)}
+              onMouseLeave={() => setBtnHover(false)}
+              style={{
+                padding: '12px', background: 'var(--accent)', border: 'none',
+                borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 14, fontWeight: 700,
+                marginTop: 4, cursor: 'pointer',
+                opacity: (loading || !name.trim() || !email.trim() || !password.trim()) ? 0.6 : 1,
+                transition: 'transform 0.15s, opacity 0.15s',
+                transform: btnHover && name.trim() && email.trim() && password.trim() ? 'scale(1.02)' : 'scale(1)',
+              }}
+            >
+              {loading ? 'Criando acesso...' : 'Começar meu teste gratuito'}
             </button>
           </form>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>já tem acesso?</span>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
@@ -1273,7 +1338,7 @@ const TrialSignupScreen = () => {
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e-mail"
               style={{ flex: 1, padding: '9px 12px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 13, outline: 'none' }} />
             <button onClick={handleLogin} disabled={loading}
-              style={{ padding: '9px 16px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 13 }}>
+              style={{ padding: '9px 16px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer' }}>
               Entrar
             </button>
           </div>
@@ -1335,9 +1400,22 @@ export default function App() {
       setSession(session)
       if (session) setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
-      if (session) setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
+      if (session) {
+        setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
+        // Google trial: se o usuário entrou via Google pelo link trial, marca como trial
+        if (localStorage.getItem('trial_signup') === '1' && !session.user.user_metadata?.is_trial) {
+          const trialStartedAt = localStorage.getItem('trial_started_at') || new Date().toISOString()
+          localStorage.removeItem('trial_signup')
+          localStorage.removeItem('trial_started_at')
+          await supabase.auth.updateUser({
+            data: { is_trial: true, trial_started_at: trialStartedAt, onboarding_complete: true, work_hours: 8 }
+          })
+          const { data: { session: refreshed } } = await supabase.auth.getSession()
+          setSession(refreshed)
+        }
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
