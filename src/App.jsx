@@ -293,24 +293,35 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
   const overloaded = total > workMinutes
 
   return (
-    <div className="glass" style={{ padding: '16px 20px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>CAPACIDADE DO DIA</span>
-        <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: '#e8963a' }}>{totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas</span>
-          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>·</span>
-          <span style={{ color: overloaded ? '#ef4444' : 'var(--text-muted)' }}>
-            {overloaded ? 'capacidade excedida' : `${remH}h${remM > 0 ? `${remM}m` : ''} disponíveis`}
+    <div className="glass" style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: `1px solid ${overloaded ? '#ef444440' : 'var(--border)'}`, overflow: 'hidden', transition: 'border-color 0.3s' }}>
+      {overloaded && (
+        <div style={{ background: '#ef444412', borderBottom: '1px solid #ef444430', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 15 }}>⚠️</span>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#ef4444' }}>Capacidade excedida!</span>
+            <span style={{ fontSize: 12, color: '#ef4444', opacity: 0.8, marginLeft: 6 }}>Remaneje suas tarefas para outro dia.</span>
+          </div>
+        </div>
+      )}
+      <div style={{ padding: '16px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>CAPACIDADE DO DIA</span>
+          <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: '#e8963a' }}>{totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas</span>
+            <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>·</span>
+            <span style={{ color: overloaded ? '#ef4444' : 'var(--text-muted)' }}>
+              {overloaded ? `${Math.floor((total - workMinutes) / 60)}h${(total - workMinutes) % 60 > 0 ? `${(total - workMinutes) % 60}m` : ''} além da capacidade` : `${remH}h${remM > 0 ? `${remM}m` : ''} disponíveis`}
+            </span>
           </span>
-        </span>
-      </div>
-      <div style={{ height: 8, background: 'rgba(150,150,150,0.18)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${donePct}%`, background: '#4caf50', borderRadius: 999, transition: 'width 0.4s ease' }} />
-        <div style={{ position: 'absolute', left: `${donePct}%`, top: 0, height: '100%', width: `${Math.max(0, pct - donePct)}%`, background: '#fdba74', borderRadius: 999, transition: 'width 0.4s ease' }} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-        <span style={{ fontSize: 11, color: '#4caf50' }}>✓ {doneH}h{doneM > 0 ? `${doneM}m` : ''} concluídas</span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{pct}% da capacidade</span>
+        </div>
+        <div style={{ height: 8, background: 'rgba(150,150,150,0.18)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${donePct}%`, background: '#4caf50', borderRadius: 999, transition: 'width 0.4s ease' }} />
+          <div style={{ position: 'absolute', left: `${donePct}%`, top: 0, height: '100%', width: `${Math.max(0, pct - donePct)}%`, background: overloaded ? '#ef4444' : '#fdba74', borderRadius: 999, transition: 'all 0.4s ease' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={{ fontSize: 11, color: '#4caf50' }}>✓ {doneH}h{doneM > 0 ? `${doneM}m` : ''} concluídas</span>
+          <span style={{ fontSize: 11, color: overloaded ? '#ef4444' : 'var(--text-muted)' }}>{pct}% da capacidade</span>
+        </div>
       </div>
     </div>
   )
@@ -432,21 +443,30 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
 }
 
 // ─── Componente: Item de tarefa ─────────────────────────────────────────────
-const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
+const TaskItem = ({ task, categories, onToggle, onDelete, onEdit, overloaded, onReallocate }) => {
   const [expanded, setExpanded] = useState(false)
+  const [showRelocate, setShowRelocate] = useState(false)
+  const [customDate, setCustomDate] = useState('')
   const category = categories.find(c => c.id === task.category_id)
   const h = Math.floor(task.estimated_minutes / 60)
   const m = task.estimated_minutes % 60
   const timeStr = h > 0 ? `${h}h${m > 0 ? `${m}m` : ''}` : `${m}min`
+  const isOverloaded = overloaded && !task.completed
+
+  const quickOptions = [
+    { label: 'Amanhã', date: addDays(today(), 1) },
+    { label: 'Em 2 dias', date: addDays(today(), 2) },
+    { label: 'Semana que vem', date: addDays(today(), 7) },
+  ]
 
   return (
     <div className="glass" style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
+      background: isOverloaded ? 'rgba(239,68,68,0.06)' : 'var(--surface)',
+      border: `1px solid ${isOverloaded ? '#ef444444' : 'var(--border)'}`,
       borderRadius: 'var(--radius)',
       padding: '14px 16px',
       opacity: task.completed ? 0.6 : 1,
-      transition: 'all 0.2s ease',
+      transition: 'all 0.25s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <button
@@ -454,7 +474,7 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
           style={{
             width: 22, height: 22, flexShrink: 0, marginTop: 1,
             borderRadius: 6,
-            border: `2px solid ${task.completed ? 'var(--success)' : 'var(--border)'}`,
+            border: `2px solid ${task.completed ? 'var(--success)' : isOverloaded ? '#ef4444' : 'var(--border)'}`,
             background: task.completed ? 'var(--success)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s ease',
@@ -468,7 +488,7 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
             <span style={{
               fontSize: 14, fontWeight: 500,
               textDecoration: task.completed ? 'line-through' : 'none',
-              color: task.completed ? 'var(--text-muted)' : 'var(--text)',
+              color: task.completed ? 'var(--text-muted)' : isOverloaded ? '#ef4444' : 'var(--text)',
             }}>
               {task.title}
             </span>
@@ -480,14 +500,14 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
             <CategoryBadge category={category} />
-            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--text-muted)' }}>
-              <Icon name="clock" size={12} color="var(--text-muted)" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: isOverloaded ? '#ef444499' : 'var(--text-muted)' }}>
+              <Icon name="clock" size={12} color={isOverloaded ? '#ef444499' : 'var(--text-muted)'} />
               {timeStr}
             </span>
             {task.notes && (
               <button
                 onClick={() => setExpanded(e => !e)}
-                style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0 }}
+                style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
               >
                 {expanded ? 'Menos ↑' : 'Notas ↓'}
               </button>
@@ -498,19 +518,64 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
               {task.notes}
             </div>
           )}
+
+          {/* Painel de realocação */}
+          {isOverloaded && showRelocate && (
+            <div style={{ marginTop: 12, padding: '12px', background: 'var(--surface)', border: '1px solid #ef444430', borderRadius: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', marginBottom: 8 }}>MOVER PARA</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {quickOptions.map(opt => (
+                  <button key={opt.label} onClick={() => { onReallocate(task.id, opt.date); setShowRelocate(false) }}
+                    style={{ padding: '5px 12px', borderRadius: 50, fontSize: 12, fontWeight: 500, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer' }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="date"
+                  value={customDate}
+                  min={addDays(today(), 1)}
+                  onChange={e => setCustomDate(e.target.value)}
+                  style={{ flex: 1, padding: '7px 10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none' }}
+                />
+                <button
+                  onClick={() => { if (customDate) { onReallocate(task.id, customDate); setShowRelocate(false) } }}
+                  disabled={!customDate}
+                  style={{ padding: '7px 14px', background: customDate ? '#ef4444' : 'var(--surface2)', border: 'none', borderRadius: 8, color: customDate ? '#fff' : 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: customDate ? 'pointer' : 'default' }}>
+                  Mover
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
+          {isOverloaded && (
+            <button
+              onClick={() => setShowRelocate(v => !v)}
+              style={{
+                padding: '5px 10px', borderRadius: 50,
+                background: showRelocate ? '#ef444420' : '#ef444415',
+                border: '1px solid #ef444440',
+                color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              title="Realocar para outro dia"
+            >
+              Realocar →
+            </button>
+          )}
           <button
             onClick={() => onEdit(task)}
-            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6 }}
+            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6, cursor: 'pointer' }}
             title="Editar"
           >
             <Icon name="edit" size={15} />
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6 }}
+            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6, cursor: 'pointer' }}
             title="Deletar"
           >
             <Icon name="trash" size={15} />
@@ -871,6 +936,12 @@ function Dashboard({ session }) {
     setTasks(prev => prev.filter(t => t.id !== id))
   }
 
+  const handleReallocate = async (id, newDate) => {
+    await supabase.from('tasks').update({ date: newDate }).eq('id', id)
+    // Remove do dia atual (vai aparecer no dia de destino)
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
+
   const handleSave = async (data) => {
     if (editingTask) {
       const { data: updated } = await supabase.from('tasks').update(data).eq('id', editingTask.id).select().single()
@@ -899,6 +970,8 @@ function Dashboard({ session }) {
 
   const pendingTasks = filteredTasks.filter(t => !t.completed)
   const doneTasks = filteredTasks.filter(t => t.completed)
+  const totalPlanned = tasks.reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
+  const isOverloaded = totalPlanned > workMinutes
   const isViewingToday = isToday(selectedDate)
   const isViewingPast = isPast(selectedDate)
 
@@ -969,7 +1042,7 @@ function Dashboard({ session }) {
             className="glass"
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 18px',
+              height: 48, padding: '0 18px',
               background: 'var(--surface)',
               border: '1px solid var(--glass-border)',
               borderRadius: 50, color: 'var(--accent)', fontSize: 13, fontWeight: 600,
@@ -984,7 +1057,7 @@ function Dashboard({ session }) {
             title="Sair"
             className="glass"
             style={{
-              width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--surface)', border: '1px solid var(--glass-border)',
               borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer',
             }}
@@ -1130,6 +1203,8 @@ function Dashboard({ session }) {
                     onToggle={handleToggle}
                     onDelete={handleDelete}
                     onEdit={t => { setEditingTask(t); setShowModal(true) }}
+                    overloaded={isOverloaded}
+                    onReallocate={handleReallocate}
                   />
                 ))}
               </>
@@ -1147,6 +1222,8 @@ function Dashboard({ session }) {
                     onToggle={handleToggle}
                     onDelete={handleDelete}
                     onEdit={t => { setEditingTask(t); setShowModal(true) }}
+                    overloaded={false}
+                    onReallocate={handleReallocate}
                   />
                 ))}
               </>
