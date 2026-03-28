@@ -808,11 +808,119 @@ const OnboardingScreen = ({ session, onComplete }) => {
 }
 
 // ─── Dashboard (app principal autenticado) ──────────────────────────────────
+// ─── Undo Toast ──────────────────────────────────────────────────────────────
+const UndoToast = ({ toast, onUndo }) => {
+  if (!toast) return null
+  return (
+    <div style={{
+      position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 9999, display: 'flex', alignItems: 'center', gap: 10,
+      background: '#1c1c1e', color: '#fff',
+      borderRadius: 50, padding: '12px 8px 12px 20px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      animation: 'slideUpToast 0.22s ease',
+      fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap',
+    }}>
+      <span>{toast.message}</span>
+      <button onClick={onUndo} style={{
+        background: 'rgba(255,255,255,0.15)', border: 'none',
+        color: '#fff', padding: '6px 16px', borderRadius: 50,
+        fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.2,
+      }}>
+        Desfazer
+      </button>
+    </div>
+  )
+}
+
+// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
+  const [neverAsk, setNeverAsk] = useState(false)
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 8000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+    }} onClick={onCancel}>
+      <div className="glass" onClick={e => e.stopPropagation()} style={{
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)', padding: '28px 28px 24px',
+        maxWidth: 360, width: '90%', textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🗑️</div>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Excluir esta tarefa?</div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.5 }}>
+          Você pode desfazer nos próximos segundos após a exclusão.
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, cursor: 'pointer' }}>
+          <input type="checkbox" checked={neverAsk} onChange={e => setNeverAsk(e.target.checked)} style={{ accentColor: 'var(--accent)', width: 14, height: 14 }} />
+          Não perguntar novamente
+        </label>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onCancel} style={{
+            flex: 1, padding: '10px', background: 'var(--surface2)',
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
+          }}>
+            Cancelar
+          </button>
+          <button onClick={() => onConfirm(neverAsk)} style={{
+            flex: 1, padding: '10px', background: '#ef4444',
+            border: 'none', borderRadius: 'var(--radius-sm)',
+            color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          }}>
+            Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Dashboard({ session }) {
   const userId = session.user.id
   const userEmail = session.user.email
 
   const [workMinutes] = useState((session.user.user_metadata?.work_hours || 8) * 60)
+
+  // ─── Undo system ───────────────────────────────────────────────────────────
+  const [undoToast, setUndoToast] = useState(null)
+  const undoTimerRef = useRef(null)
+  const undoActionRef = useRef(null)
+  const pendingDeletesRef = useRef({})
+
+  const showUndoToast = (message, onUndo) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    undoActionRef.current = onUndo
+    setUndoToast({ message })
+    undoTimerRef.current = setTimeout(() => {
+      setUndoToast(null)
+      undoActionRef.current = null
+    }, 3000)
+  }
+
+  const executeUndo = useCallback(() => {
+    if (undoActionRef.current) {
+      undoActionRef.current()
+      clearTimeout(undoTimerRef.current)
+      setUndoToast(null)
+      undoActionRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        executeUndo()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [executeUndo])
+
+  // ─── Delete confirm ────────────────────────────────────────────────────────
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
 
   const [displayName, setDisplayName] = useState(
     session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
@@ -924,16 +1032,43 @@ function Dashboard({ session }) {
 
   const handleToggle = async (task) => {
     const completed = !task.completed
-    await supabase.from('tasks').update({
-      completed,
-      completed_at: completed ? new Date().toISOString() : null
-    }).eq('id', task.id)
-    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t))
+    const completedAt = completed ? new Date().toISOString() : null
+    await supabase.from('tasks').update({ completed, completed_at: completedAt }).eq('id', task.id)
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed, completed_at: completedAt } : t))
+
+    if (completed) {
+      showUndoToast('Tarefa concluída', async () => {
+        await supabase.from('tasks').update({ completed: false, completed_at: null }).eq('id', task.id)
+        setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: false, completed_at: null } : t))
+      })
+    }
   }
 
-  const handleDelete = async (id) => {
-    await supabase.from('tasks').delete().eq('id', id)
+  const executeDelete = (id) => {
+    const taskToDelete = tasks.find(t => t.id === id)
     setTasks(prev => prev.filter(t => t.id !== id))
+
+    // Deferred real deletion — can be cancelled by undo
+    const timeoutId = setTimeout(async () => {
+      await supabase.from('tasks').delete().eq('id', id)
+      delete pendingDeletesRef.current[id]
+    }, 3000)
+    pendingDeletesRef.current[id] = timeoutId
+
+    showUndoToast('Tarefa excluída', () => {
+      clearTimeout(pendingDeletesRef.current[id])
+      delete pendingDeletesRef.current[id]
+      if (taskToDelete) setTasks(prev => [...prev, taskToDelete].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)))
+    })
+  }
+
+  const handleDelete = (id) => {
+    const skipConfirm = localStorage.getItem('skipDeleteConfirm') === '1'
+    if (skipConfirm) {
+      executeDelete(id)
+    } else {
+      setDeleteConfirmId(id)
+    }
   }
 
   const handleReallocate = async (id, newDate) => {
@@ -1039,17 +1174,16 @@ function Dashboard({ session }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => { setEditingTask(null); setShowModal(true) }}
-            className="glass"
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              height: 48, padding: '0 18px',
-              background: 'var(--surface)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: 50, color: 'var(--accent)', fontSize: 13, fontWeight: 600,
+              height: 48, padding: '0 20px',
+              background: 'var(--accent)',
+              border: 'none',
+              borderRadius: 50, color: '#fff', fontSize: 13, fontWeight: 600,
               cursor: 'pointer',
             }}
           >
-            <Icon name="plus" size={15} color="var(--accent)" />
+            <Icon name="plus" size={15} color="#fff" />
             Nova tarefa
           </button>
           <button
@@ -1242,6 +1376,19 @@ function Dashboard({ session }) {
           onClose={() => { setShowModal(false); setEditingTask(null) }}
         />
       )}
+
+      {deleteConfirmId && (
+        <DeleteConfirmModal
+          onConfirm={(neverAsk) => {
+            if (neverAsk) localStorage.setItem('skipDeleteConfirm', '1')
+            setDeleteConfirmId(null)
+            executeDelete(deleteConfirmId)
+          }}
+          onCancel={() => setDeleteConfirmId(null)}
+        />
+      )}
+
+      <UndoToast toast={undoToast} onUndo={executeUndo} />
     </div>
   )
 }
