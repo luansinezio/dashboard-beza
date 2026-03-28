@@ -120,9 +120,9 @@ const LoginScreen = () => {
           {message && (
             <div style={{
               padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: 16, fontSize: 13,
-              background: message.type === 'error' ? '#ef444415' : '#22c55e15',
-              border: `1px solid ${message.type === 'error' ? '#ef444440' : '#22c55e40'}`,
-              color: message.type === 'error' ? '#ef4444' : '#22c55e',
+              background: message.type === 'error' ? '#ef444415' : '#4caf5015',
+              border: `1px solid ${message.type === 'error' ? '#ef444440' : '#4caf5040'}`,
+              color: message.type === 'error' ? '#ef4444' : '#4caf50',
             }}>
               {message.text}
             </div>
@@ -283,27 +283,33 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
   const done = tasks.filter(t => t.completed).reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
   const pct = Math.min(100, Math.round((total / workMinutes) * 100))
   const donePct = Math.min(100, Math.round((done / workMinutes) * 100))
-  const color = pct > 100 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#22c55e'
+  const remaining = Math.max(0, workMinutes - total)
   const totalH = Math.floor(total / 60)
   const totalM = total % 60
   const doneH = Math.floor(done / 60)
   const doneM = done % 60
-  const workH = Math.floor(workMinutes / 60)
+  const remH = Math.floor(remaining / 60)
+  const remM = remaining % 60
+  const overloaded = total > workMinutes
 
   return (
     <div className="glass" style={{ padding: '16px 20px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>CAPACIDADE DO DIA</span>
-        <span style={{ fontSize: 13, color: color, fontWeight: 600 }}>
-          {totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas / {workH}h disponíveis
+        <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: '#e8963a' }}>{totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas</span>
+          <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>·</span>
+          <span style={{ color: overloaded ? '#ef4444' : 'var(--text-muted)' }}>
+            {overloaded ? 'capacidade excedida' : `${remH}h${remM > 0 ? `${remM}m` : ''} disponíveis`}
+          </span>
         </span>
       </div>
       <div style={{ height: 8, background: 'rgba(150,150,150,0.18)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${donePct}%`, background: '#22c55e', borderRadius: 999, transition: 'width 0.4s ease' }} />
+        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${donePct}%`, background: '#4caf50', borderRadius: 999, transition: 'width 0.4s ease' }} />
         <div style={{ position: 'absolute', left: `${donePct}%`, top: 0, height: '100%', width: `${Math.max(0, pct - donePct)}%`, background: '#fdba74', borderRadius: 999, transition: 'width 0.4s ease' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-        <span style={{ fontSize: 11, color: '#22c55e' }}>✓ {doneH}h{doneM > 0 ? `${doneM}m` : ''} concluídas</span>
+        <span style={{ fontSize: 11, color: '#4caf50' }}>✓ {doneH}h{doneM > 0 ? `${doneM}m` : ''} concluídas</span>
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{pct}% da capacidade</span>
       </div>
     </div>
@@ -1008,9 +1014,9 @@ function Dashboard({ session }) {
               <div style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize' }}>
                 {formatDisplay(selectedDate)}
               </div>
-              {isViewingToday && <span style={{ fontSize: 11, background: '#9692E122', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #9692E144', whiteSpace: 'nowrap' }}>Hoje</span>}
+              {isViewingToday && <span style={{ fontSize: 11, background: '#3b82f622', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #3b82f644', whiteSpace: 'nowrap' }}>Hoje</span>}
               {isViewingPast && !isViewingToday && <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '2px 10px', borderRadius: 999, border: '1px solid #ef444433', whiteSpace: 'nowrap' }}>Passado</span>}
-              {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#22c55e11', color: '#22c55e', padding: '2px 10px', borderRadius: 999, border: '1px solid #22c55e33', whiteSpace: 'nowrap' }}>Futuro</span>}
+              {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#4caf5011', color: '#4caf50', padding: '2px 10px', borderRadius: 999, border: '1px solid #4caf5033', whiteSpace: 'nowrap' }}>Futuro</span>}
             </div>
             {!isViewingToday && (
               <button
