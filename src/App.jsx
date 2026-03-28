@@ -112,7 +112,7 @@ const LoginScreen = () => {
         </div>
 
         {/* Card */}
-        <div style={{
+        <div className="glass" style={{
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 'var(--radius)', padding: 28,
         }}>
@@ -292,7 +292,7 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
   const workH = Math.floor(workMinutes / 60)
 
   return (
-    <div style={{ padding: '16px 20px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+    <div className="glass" style={{ padding: '16px 20px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>CAPACIDADE DO DIA</span>
         <span style={{ fontSize: 13, color: color, fontWeight: 600 }}>
@@ -329,8 +329,8 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
   const presets = [30, 60, 90, 120]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, width: '100%', maxWidth: 460 }}>
+    <div className="glass-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+      <div className="glass" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, width: '100%', maxWidth: 460 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600 }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4 }}>
@@ -435,7 +435,7 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
   const timeStr = h > 0 ? `${h}h${m > 0 ? `${m}m` : ''}` : `${m}min`
 
   return (
-    <div style={{
+    <div className="glass" style={{
       background: 'var(--surface)',
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
@@ -601,7 +601,7 @@ const OnboardingScreen = ({ session, onComplete }) => {
         </div>
 
         {/* Card do passo */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 28 }}>
+        <div className="glass" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 28 }}>
 
           {/* PASSO 1 — Nome */}
           {step === 1 && (
@@ -900,9 +900,9 @@ function Dashboard({ session }) {
   const isViewingPast = isPast(selectedDate)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
       {/* Header */}
-      <header style={{
+      <header className="glass-header" style={{
         background: 'var(--surface)', borderBottom: '1px solid var(--border)',
         padding: '16px 24px', position: 'sticky', top: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
