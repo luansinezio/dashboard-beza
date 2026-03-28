@@ -29,13 +29,235 @@ const Icon = ({ name, size = 18, color = 'currentColor' }) => {
     refresh: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />,
     edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
     x: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />,
-    history: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+    logout: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />,
     sun: <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>,
+    mail: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
+    lock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
+    eye: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></>,
+    eyeOff: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></>,
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} xmlns="http://www.w3.org/2000/svg">
       {icons[name]}
     </svg>
+  )
+}
+
+// ─── Tela de Login ──────────────────────────────────────────────────────────
+const LoginScreen = () => {
+  const [mode, setMode] = useState('login') // 'login' | 'signup' | 'forgot'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState(null) // { type: 'error'|'success', text }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage(null)
+
+    if (mode === 'forgot') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname,
+      })
+      if (error) setMessage({ type: 'error', text: error.message })
+      else setMessage({ type: 'success', text: 'E-mail enviado! Verifique sua caixa de entrada.' })
+      setLoading(false)
+      return
+    }
+
+    if (mode === 'signup') {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) setMessage({ type: 'error', text: error.message })
+      else setMessage({ type: 'success', text: 'Conta criada! Verifique seu e-mail para confirmar.' })
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setMessage({ type: 'error', text: 'E-mail ou senha incorretos.' })
+    }
+    setLoading(false)
+  }
+
+  const handleGoogle = async () => {
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname },
+    })
+    if (error) {
+      setMessage({ type: 'error', text: 'Erro ao entrar com Google.' })
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh', background: 'var(--bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 20,
+    }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{
+            width: 56, height: 56, background: 'var(--accent)', borderRadius: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+          }}>
+            <Icon name="sun" size={28} color="#fff" />
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Beza Dashboard</div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+            {mode === 'login' ? 'Acesse sua conta' : mode === 'signup' ? 'Crie sua conta' : 'Recuperar senha'}
+          </div>
+        </div>
+
+        {/* Card */}
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)', padding: 28,
+        }}>
+
+          {/* Mensagem */}
+          {message && (
+            <div style={{
+              padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: 16, fontSize: 13,
+              background: message.type === 'error' ? '#ef444415' : '#22c55e15',
+              border: `1px solid ${message.type === 'error' ? '#ef444440' : '#22c55e40'}`,
+              color: message.type === 'error' ? '#ef4444' : '#22c55e',
+            }}>
+              {message.text}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* E-mail */}
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>E-MAIL</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                  <Icon name="mail" size={15} />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  placeholder="seu@email.com"
+                  style={{
+                    width: '100%', paddingLeft: 36, padding: '10px 12px 10px 36px',
+                    background: 'var(--surface2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 14, outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Senha */}
+            {mode !== 'forgot' && (
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>SENHA</label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                    <Icon name="lock" size={15} />
+                  </div>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    placeholder={mode === 'signup' ? 'Mínimo 6 caracteres' : '••••••••'}
+                    minLength={6}
+                    style={{
+                      width: '100%', padding: '10px 40px 10px 36px',
+                      background: 'var(--surface2)', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 14, outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(v => !v)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2 }}
+                  >
+                    <Icon name={showPass ? 'eyeOff' : 'eye'} size={15} />
+                  </button>
+                </div>
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode('forgot'); setMessage(null) }}
+                    style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', marginTop: 6, padding: 0 }}
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Botão principal */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '11px', background: 'var(--accent)', border: 'none',
+                borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 14, fontWeight: 600,
+                opacity: loading ? 0.7 : 1, marginTop: 4,
+              }}
+            >
+              {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : mode === 'signup' ? 'Criar conta' : 'Enviar e-mail'}
+            </button>
+          </form>
+
+          {/* Divisor */}
+          {mode !== 'forgot' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>ou</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              </div>
+
+              {/* Google */}
+              <button
+                onClick={handleGoogle}
+                disabled={loading}
+                style={{
+                  width: '100%', padding: '11px', background: 'var(--surface2)',
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text)', fontSize: 14, fontWeight: 500,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Entrar com Google
+              </button>
+            </>
+          )}
+
+          {/* Alternar modo */}
+          <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--text-muted)' }}>
+            {mode === 'login' ? (
+              <>Não tem conta?{' '}
+                <button onClick={() => { setMode('signup'); setMessage(null) }} style={{ color: 'var(--accent)', background: 'none', border: 'none', fontWeight: 600, padding: 0 }}>
+                  Criar conta
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => { setMode('login'); setMessage(null) }} style={{ color: 'var(--accent)', background: 'none', border: 'none', fontWeight: 600, padding: 0 }}>
+                  ← Voltar ao login
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -58,7 +280,7 @@ const CategoryBadge = ({ category }) => {
 
 // ─── Componente: Barra de capacidade ────────────────────────────────────────
 const CapacityBar = ({ tasks }) => {
-  const WORK_MINUTES = 8 * 60 // 8 horas
+  const WORK_MINUTES = 8 * 60
   const total = tasks.reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
   const done = tasks.filter(t => t.completed).reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
   const pct = Math.min(100, Math.round((total / WORK_MINUTES) * 100))
@@ -215,14 +437,13 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
   return (
     <div style={{
       background: 'var(--surface)',
-      border: `1px solid ${task.completed ? 'var(--border)' : 'var(--border)'}`,
+      border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
       padding: '14px 16px',
       opacity: task.completed ? 0.6 : 1,
       transition: 'all 0.2s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        {/* Checkbox */}
         <button
           onClick={() => onToggle(task)}
           style={{
@@ -237,7 +458,6 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
           {task.completed && <Icon name="check" size={13} color="#fff" />}
         </button>
 
-        {/* Conteúdo */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{
@@ -275,18 +495,17 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
           )}
         </div>
 
-        {/* Ações */}
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
           <button
             onClick={() => onEdit(task)}
-            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6, transition: 'color 0.15s' }}
+            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6 }}
             title="Editar"
           >
             <Icon name="edit" size={15} />
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6, transition: 'color 0.15s' }}
+            style={{ padding: 6, background: 'none', border: 'none', color: 'var(--text-muted)', borderRadius: 6 }}
             title="Deletar"
           >
             <Icon name="trash" size={15} />
@@ -297,8 +516,12 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
   )
 }
 
-// ─── App principal ──────────────────────────────────────────────────────────
-export default function App() {
+// ─── Dashboard (app principal autenticado) ──────────────────────────────────
+function Dashboard({ session }) {
+  const userId = session.user.id
+  const userEmail = session.user.email
+  const userName = session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
+
   const [selectedDate, setSelectedDate] = useState(today())
   const [tasks, setTasks] = useState([])
   const [categories, setCategories] = useState([])
@@ -308,42 +531,40 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState('all')
   const [rolledCount, setRolledCount] = useState(0)
 
-  // Carregar categorias (uma vez)
   useEffect(() => {
     supabase.from('categories').select('*').order('name').then(({ data }) => {
       if (data) setCategories(data)
     })
   }, [])
 
-  // Carregar tarefas do dia selecionado
   const loadTasks = useCallback(async (date) => {
     setLoading(true)
     const { data } = await supabase
       .from('tasks')
       .select('*')
       .eq('date', date)
+      .eq('user_id', userId)
       .order('created_at', { ascending: true })
     setTasks(data || [])
     setLoading(false)
-  }, [])
+  }, [userId])
 
-  // Roll-over: copiar tarefas não concluídas de dias anteriores para hoje
   const runRollover = useCallback(async () => {
     const todayStr = today()
-    // Buscar tarefas não concluídas anteriores a hoje que não foram rolled over ainda
     const { data: pending } = await supabase
       .from('tasks')
       .select('*')
       .lt('date', todayStr)
       .eq('completed', false)
+      .eq('user_id', userId)
 
     if (!pending || pending.length === 0) return
 
-    // Verificar quais já foram copiadas para hoje (pelo título + original_date)
     const { data: todayTasks } = await supabase
       .from('tasks')
       .select('*')
       .eq('date', todayStr)
+      .eq('user_id', userId)
 
     const alreadyRolled = new Set(
       (todayTasks || []).filter(t => t.rolled_over).map(t => t.original_date + '|' + t.title)
@@ -360,6 +581,7 @@ export default function App() {
         date: todayStr,
         rolled_over: true,
         original_date: t.original_date || t.date,
+        user_id: userId,
       }))
 
     if (toInsert.length > 0) {
@@ -367,14 +589,12 @@ export default function App() {
       setRolledCount(toInsert.length)
       setTimeout(() => setRolledCount(0), 5000)
     }
-  }, [])
+  }, [userId])
 
-  // Na montagem: rollover + carregar hoje
   useEffect(() => {
     runRollover().then(() => loadTasks(today()))
   }, [runRollover, loadTasks])
 
-  // Ao trocar de data
   useEffect(() => {
     loadTasks(selectedDate)
   }, [selectedDate, loadTasks])
@@ -403,11 +623,16 @@ export default function App() {
         date: selectedDate,
         completed: false,
         rolled_over: false,
+        user_id: userId,
       }).select().single()
       if (created) setTasks(prev => [...prev, created])
     }
     setShowModal(false)
     setEditingTask(null)
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
   }
 
   const filteredTasks = filterCategory === 'all'
@@ -420,7 +645,7 @@ export default function App() {
   const isViewingPast = isPast(selectedDate)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Header */}
       <header style={{
         background: 'var(--surface)', borderBottom: '1px solid var(--border)',
@@ -433,20 +658,32 @@ export default function App() {
           </div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>Beza Dashboard</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Gerenciador de Tarefas</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{userName}</div>
           </div>
         </div>
-        <button
-          onClick={() => { setEditingTask(null); setShowModal(true) }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', background: 'var(--accent)', border: 'none',
-            borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 13, fontWeight: 600
-          }}
-        >
-          <Icon name="plus" size={16} color="#fff" />
-          Nova tarefa
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => { setEditingTask(null); setShowModal(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', background: 'var(--accent)', border: 'none',
+              borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 13, fontWeight: 600
+            }}
+          >
+            <Icon name="plus" size={16} color="#fff" />
+            Nova tarefa
+          </button>
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            style={{
+              padding: '8px 10px', background: 'var(--surface2)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center'
+            }}
+          >
+            <Icon name="logout" size={16} />
+          </button>
+        </div>
       </header>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px' }}>
@@ -557,7 +794,6 @@ export default function App() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Pendentes */}
             {pendingTasks.length > 0 && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, marginTop: 4 }}>
@@ -575,8 +811,6 @@ export default function App() {
                 ))}
               </>
             )}
-
-            {/* Concluídas */}
             {doneTasks.length > 0 && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, marginTop: pendingTasks.length > 0 ? 12 : 4 }}>
@@ -597,11 +831,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Botão flutuante no mobile */}
         <div style={{ height: 80 }} />
       </div>
 
-      {/* Modal */}
       {showModal && (
         <TaskModal
           task={editingTask}
@@ -612,4 +844,36 @@ export default function App() {
       )}
     </div>
   )
+}
+
+// ─── App raiz com controle de autenticação ──────────────────────────────────
+export default function App() {
+  const [session, setSession] = useState(undefined) // undefined = carregando
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Carregando sessão
+  if (session === undefined) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+          <div style={{ width: 40, height: 40, background: 'var(--accent)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <Icon name="sun" size={20} color="#fff" />
+          </div>
+          Carregando...
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) return <LoginScreen />
+  return <Dashboard session={session} />
 }
