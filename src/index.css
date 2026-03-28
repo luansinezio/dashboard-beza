@@ -102,6 +102,15 @@ body {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Filtro ativo no light mode — cinza escuro neutro */
+@media (prefers-color-scheme: light) {
+  .glass[style*="rgba(255,255,255,0.18)"] {
+    background: rgba(0, 0, 0, 0.09) !important;
+    border-color: rgba(0, 0, 0, 0.13) !important;
+    color: #111111 !important;
+  }
+}
+
 /* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
