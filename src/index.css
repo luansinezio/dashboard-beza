@@ -28,10 +28,11 @@
   --glass-shadow-hover: 0 4px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.13);
 
   /* Modal tokens */
-  --modal-bg: #1e1e23;
-  --modal-input-bg: rgba(255, 255, 255, 0.06);
-  --modal-input-border: rgba(255, 255, 255, 0.10);
-  --modal-overlay: rgba(0, 0, 0, 0.22);
+  --modal-bg: #17171c;
+  --modal-input-bg: rgba(255, 255, 255, 0.11);
+  --modal-input-border: rgba(255, 255, 255, 0.16);
+  --modal-overlay: rgba(0, 0, 0, 0.28);
+  --modal-radius: 22px;
   --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.22) inset, 0 4px 14px rgba(59,130,246,0.35);
 }
 
@@ -56,9 +57,10 @@
 
     /* Modal tokens - light */
     --modal-bg: #ffffff;
-    --modal-input-bg: rgba(0, 0, 0, 0.04);
-    --modal-input-border: rgba(0, 0, 0, 0.08);
-    --modal-overlay: rgba(0, 0, 0, 0.12);
+    --modal-input-bg: rgba(0, 0, 0, 0.055);
+    --modal-input-border: rgba(0, 0, 0, 0.13);
+    --modal-overlay: rgba(0, 0, 0, 0.18);
+    --modal-radius: 22px;
     --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.4) inset, 0 4px 14px rgba(59,130,246,0.25);
   }
 }
