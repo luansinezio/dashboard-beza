@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Folder back -->
+  <rect x="1" y="8" width="30" height="22" rx="4" fill="#1e1e1e"/>
+  <!-- Folder tab -->
+  <path d="M1,12 L1,9 Q1,8 2,8 L12,8 Q14,8 15,10 L17,12 Z" fill="#2a2a2a"/>
+  <!-- Document back -->
+  <rect x="18" y="5" width="9" height="15" rx="2" fill="white" opacity="0.65"/>
+  <rect x="19" y="7" width="5" height="1.5" rx="0.75" fill="#ccc"/>
+  <rect x="19" y="10" width="6" height="1.5" rx="0.75" fill="#ccc"/>
+  <!-- Document front -->
+  <rect x="10" y="3" width="10" height="17" rx="2" fill="white" opacity="0.9"/>
+  <rect x="12" y="6" width="6" height="1.5" rx="0.75" fill="#bbb"/>
+  <rect x="12" y="9" width="5" height="1.5" rx="0.75" fill="#bbb"/>
+  <rect x="12" y="12" width="4" height="1.5" rx="0.75" fill="#bbb"/>
+  <!-- Folder pocket -->
+  <rect x="1" y="17" width="30" height="13" rx="0 0 4 4" fill="#2a2a2a" opacity="0.85"/>
+</svg>
