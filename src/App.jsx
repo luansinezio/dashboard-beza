@@ -146,7 +146,7 @@ const LoginScreen = () => {
                   style={{
                     width: '100%', paddingLeft: 36, padding: '10px 12px 10px 36px',
                     background: 'var(--surface2)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 14, outline: 'none',
+                    borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none',
                   }}
                 />
               </div>
@@ -170,7 +170,7 @@ const LoginScreen = () => {
                     style={{
                       width: '100%', padding: '10px 40px 10px 36px',
                       background: 'var(--surface2)', border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 14, outline: 'none',
+                      borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none',
                     }}
                   />
                   <button
@@ -299,9 +299,9 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
           {totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas / {workH}h disponíveis
         </span>
       </div>
-      <div style={{ height: 8, background: 'var(--surface2)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ height: 8, background: 'rgba(150,150,150,0.18)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${donePct}%`, background: '#22c55e', borderRadius: 999, transition: 'width 0.4s ease' }} />
-        <div style={{ position: 'absolute', left: `${donePct}%`, top: 0, height: '100%', width: `${Math.max(0, pct - donePct)}%`, background: color + '88', borderRadius: 999, transition: 'width 0.4s ease' }} />
+        <div style={{ position: 'absolute', left: `${donePct}%`, top: 0, height: '100%', width: `${Math.max(0, pct - donePct)}%`, background: '#fdba74', borderRadius: 999, transition: 'width 0.4s ease' }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
         <span style={{ fontSize: 11, color: '#22c55e' }}>✓ {doneH}h{doneM > 0 ? `${doneM}m` : ''} concluídas</span>
@@ -347,7 +347,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
               onChange={e => setTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="Descreva a tarefa..."
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
             />
           </div>
 
@@ -356,7 +356,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
             <select
               value={categoryId}
               onChange={e => setCategoryId(e.target.value)}
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', color: categoryId ? 'var(--text)' : 'var(--text-muted)', fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: categoryId ? 'var(--text)' : 'var(--text-muted)', fontSize: 14, outline: 'none' }}
             >
               <option value="">Sem categoria</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -401,7 +401,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
               onChange={e => setNotes(e.target.value)}
               placeholder="Detalhes, links, contexto..."
               rows={2}
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'vertical' }}
+              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'vertical' }}
             />
           </div>
         </div>
@@ -1005,22 +1005,22 @@ function Dashboard({ session }) {
           </button>
 
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize' }}>
-              {formatDisplay(selectedDate)}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize' }}>
+                {formatDisplay(selectedDate)}
+              </div>
+              {isViewingToday && <span style={{ fontSize: 11, background: '#9692E122', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #9692E144', whiteSpace: 'nowrap' }}>Hoje</span>}
+              {isViewingPast && !isViewingToday && <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '2px 10px', borderRadius: 999, border: '1px solid #ef444433', whiteSpace: 'nowrap' }}>Passado</span>}
+              {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#22c55e11', color: '#22c55e', padding: '2px 10px', borderRadius: 999, border: '1px solid #22c55e33', whiteSpace: 'nowrap' }}>Futuro</span>}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2 }}>
-              {isViewingToday && <span style={{ fontSize: 11, background: '#9692E122', color: 'var(--accent)', padding: '1px 8px', borderRadius: 999, border: '1px solid #9692E144' }}>Hoje</span>}
-              {isViewingPast && !isViewingToday && <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '1px 8px', borderRadius: 999, border: '1px solid #ef444433' }}>Passado</span>}
-              {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#22c55e11', color: '#22c55e', padding: '1px 8px', borderRadius: 999, border: '1px solid #22c55e33' }}>Futuro</span>}
-              {!isViewingToday && (
-                <button
-                  onClick={() => setSelectedDate(today())}
-                  style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, textDecoration: 'underline' }}
-                >
-                  Ir para hoje
-                </button>
-              )}
-            </div>
+            {!isViewingToday && (
+              <button
+                onClick={() => setSelectedDate(today())}
+                style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, textDecoration: 'underline', marginTop: 4 }}
+              >
+                Ir para hoje
+              </button>
+            )}
           </div>
 
           <button
