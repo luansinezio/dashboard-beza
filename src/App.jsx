@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase.js'
 
 // ─── Utilitários de data ────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ const LoginScreen = () => {
           }}>
             <Icon name="sun" size={28} color="#fff" />
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Beza Dashboard</div>
+          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Dashboard</div>
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
             {mode === 'login' ? 'Acesse sua conta' : mode === 'signup' ? 'Crie sua conta' : 'Recuperar senha'}
           </div>
@@ -522,6 +522,22 @@ function Dashboard({ session }) {
   const userEmail = session.user.email
   const userName = session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
 
+  const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
+  const [avatarHover, setAvatarHover] = useState(false)
+  const avatarInputRef = useRef(null)
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/avatar.${ext}`
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (error) { console.error(error); return }
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
+    setAvatarUrl(publicUrl + '?t=' + Date.now())
+  }
+
   const [selectedDate, setSelectedDate] = useState(today())
   const [tasks, setTasks] = useState([])
   const [categories, setCategories] = useState([])
@@ -653,11 +669,36 @@ function Dashboard({ session }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 32, height: 32, background: 'var(--accent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="sun" size={16} color="#fff" />
+          {/* Avatar clicável */}
+          <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+          <div
+            onClick={() => avatarInputRef.current?.click()}
+            onMouseEnter={() => setAvatarHover(true)}
+            onMouseLeave={() => setAvatarHover(false)}
+            title="Clique para alterar foto de perfil"
+            style={{
+              width: 38, height: 38, borderRadius: '50%',
+              overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
+              border: '2px solid var(--border)',
+              background: avatarUrl ? 'transparent' : 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'relative', transition: 'border-color 0.2s',
+              borderColor: avatarHover ? 'var(--accent)' : 'var(--border)',
+            }}
+          >
+            {avatarUrl
+              ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <span style={{ color: '#fff', fontSize: 15, fontWeight: 700, userSelect: 'none' }}>{userName.charAt(0).toUpperCase()}</span>
+            }
+            {avatarHover && (
+              <div style={{
+                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+              }}>📷</div>
+            )}
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>Beza Dashboard</div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Dashboard</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{userName}</div>
           </div>
         </div>
