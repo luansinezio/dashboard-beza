@@ -279,24 +279,24 @@ const CategoryBadge = ({ category }) => {
 }
 
 // ─── Componente: Barra de capacidade ────────────────────────────────────────
-const CapacityBar = ({ tasks }) => {
-  const WORK_MINUTES = 8 * 60
+const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
   const total = tasks.reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
   const done = tasks.filter(t => t.completed).reduce((acc, t) => acc + (t.estimated_minutes || 60), 0)
-  const pct = Math.min(100, Math.round((total / WORK_MINUTES) * 100))
-  const donePct = Math.min(100, Math.round((done / WORK_MINUTES) * 100))
+  const pct = Math.min(100, Math.round((total / workMinutes) * 100))
+  const donePct = Math.min(100, Math.round((done / workMinutes) * 100))
   const color = pct > 100 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#22c55e'
   const totalH = Math.floor(total / 60)
   const totalM = total % 60
   const doneH = Math.floor(done / 60)
   const doneM = done % 60
+  const workH = Math.floor(workMinutes / 60)
 
   return (
     <div style={{ padding: '16px 20px', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>CAPACIDADE DO DIA</span>
         <span style={{ fontSize: 13, color: color, fontWeight: 600 }}>
-          {totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas / 8h disponíveis
+          {totalH}h{totalM > 0 ? `${totalM}m` : ''} planejadas / {workH}h disponíveis
         </span>
       </div>
       <div style={{ height: 8, background: 'var(--surface2)', borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
@@ -516,10 +516,235 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
   )
 }
 
+// ─── Onboarding (primeiro acesso) ───────────────────────────────────────────
+const OnboardingScreen = ({ session, onComplete }) => {
+  const [step, setStep] = useState(1)
+  const [name, setName] = useState(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '')
+  const [workHours, setWorkHours] = useState(8)
+  const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  const handleFinish = async () => {
+    setSaving(true)
+    let finalAvatarUrl = avatarUrl
+    if (avatarFile) {
+      const ext = avatarFile.name.split('.').pop()
+      const path = `${session.user.id}/avatar.${ext}`
+      await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true })
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      finalAvatarUrl = publicUrl + '?t=' + Date.now()
+    }
+    await supabase.auth.updateUser({
+      data: {
+        full_name: name.trim() || session.user.email?.split('@')[0],
+        avatar_url: finalAvatarUrl,
+        work_hours: workHours,
+        onboarding_complete: true,
+      }
+    })
+    onComplete()
+    setSaving(false)
+  }
+
+  const displayAvatar = avatarPreview || avatarUrl
+  const initials = (name || 'U').charAt(0).toUpperCase()
+
+  const steps = [
+    { num: 1, label: 'Seu nome' },
+    { num: 2, label: 'Foto de perfil' },
+    { num: 3, label: 'Jornada de trabalho' },
+  ]
+
+  return (
+    <div style={{
+      minHeight: '100vh', background: 'var(--bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div style={{ width: '100%', maxWidth: 460 }}>
+
+        {/* Cabeçalho */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ width: 52, height: 52, background: 'var(--accent)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Icon name="sun" size={26} color="#fff" />
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Bem-vindo ao Dashboard!</div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Configure seu perfil antes de começar</div>
+        </div>
+
+        {/* Indicador de passos */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 28 }}>
+          {steps.map((s, i) => (
+            <div key={s.num} style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', fontSize: 12, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: step >= s.num ? 'var(--accent)' : 'var(--surface2)',
+                color: step >= s.num ? '#fff' : 'var(--text-muted)',
+                border: `2px solid ${step >= s.num ? 'var(--accent)' : 'var(--border)'}`,
+                transition: 'all 0.3s',
+              }}>{s.num}</div>
+              {i < steps.length - 1 && (
+                <div style={{ width: 48, height: 2, background: step > s.num ? 'var(--accent)' : 'var(--border)', transition: 'background 0.3s', margin: '0 4px' }} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Card do passo */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 28 }}>
+
+          {/* PASSO 1 — Nome */}
+          {step === 1 && (
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Como você se chama?</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>Esse nome vai aparecer no seu dashboard.</div>
+              <input
+                autoFocus
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && name.trim() && setStep(2)}
+                placeholder="Seu nome completo"
+                style={{
+                  width: '100%', padding: '12px 14px', fontSize: 15,
+                  background: 'var(--surface2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', color: 'var(--text)', outline: 'none',
+                }}
+              />
+            </div>
+          )}
+
+          {/* PASSO 2 — Foto */}
+          {step === 2 && (
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Adicione uma foto de perfil</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>Opcional — você pode adicionar depois também.</div>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
+                    background: displayAvatar ? 'transparent' : 'var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '3px dashed var(--border)', transition: 'border-color 0.2s',
+                    position: 'relative',
+                  }}
+                >
+                  {displayAvatar
+                    ? <img src={displayAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontSize: 36, color: '#fff', fontWeight: 700 }}>{initials}</span>
+                  }
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    padding: '8px 20px', background: 'var(--surface2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 13, cursor: 'pointer',
+                  }}
+                >
+                  {displayAvatar ? 'Trocar foto' : 'Escolher foto'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PASSO 3 — Horas de trabalho */}
+          {step === 3 && (
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Qual é a sua jornada diária?</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 28 }}>Usamos isso para calcular sua capacidade de trabalho no dia.</div>
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 52, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{workHours}</div>
+                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>horas por dia</div>
+              </div>
+              <input
+                type="range"
+                min={1} max={16} step={1}
+                value={workHours}
+                onChange={e => setWorkHours(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer', height: 4 }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>1h</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>16h</span>
+              </div>
+            </div>
+          )}
+
+          {/* Botões de navegação */}
+          <div style={{ display: 'flex', gap: 10, marginTop: 28 }}>
+            {step > 1 && (
+              <button
+                onClick={() => setStep(s => s - 1)}
+                style={{
+                  flex: 1, padding: '11px', background: 'var(--surface2)',
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
+                }}
+              >
+                ← Voltar
+              </button>
+            )}
+            {step < 3 ? (
+              <button
+                onClick={() => setStep(s => s + 1)}
+                disabled={step === 1 && !name.trim()}
+                style={{
+                  flex: 2, padding: '11px',
+                  background: (step === 1 && !name.trim()) ? 'var(--surface2)' : 'var(--accent)',
+                  border: 'none', borderRadius: 'var(--radius-sm)',
+                  color: (step === 1 && !name.trim()) ? 'var(--text-muted)' : '#fff',
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Próximo →
+              </button>
+            ) : (
+              <button
+                onClick={handleFinish}
+                disabled={saving}
+                style={{
+                  flex: 2, padding: '11px', background: 'var(--accent)',
+                  border: 'none', borderRadius: 'var(--radius-sm)',
+                  color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  opacity: saving ? 0.7 : 1,
+                }}
+              >
+                {saving ? 'Salvando...' : '🚀 Começar!'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Pular (passo 2) */}
+        {step === 2 && (
+          <div style={{ textAlign: 'center', marginTop: 14 }}>
+            <button onClick={() => setStep(3)} style={{ fontSize: 13, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Pular por agora
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard (app principal autenticado) ──────────────────────────────────
 function Dashboard({ session }) {
   const userId = session.user.id
   const userEmail = session.user.email
+
+  const [workMinutes] = useState((session.user.user_metadata?.work_hours || 8) * 60)
 
   const [displayName, setDisplayName] = useState(
     session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
@@ -817,7 +1042,7 @@ function Dashboard({ session }) {
         {/* Capacidade */}
         {tasks.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <CapacityBar tasks={tasks} />
+            <CapacityBar tasks={tasks} workMinutes={workMinutes} />
           </div>
         )}
 
@@ -931,19 +1156,25 @@ function Dashboard({ session }) {
 
 // ─── App raiz com controle de autenticação ──────────────────────────────────
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = carregando
+  const [session, setSession] = useState(undefined)
+  const [onboardingDone, setOnboardingDone] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      if (session) {
+        setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) {
+        setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
 
-  // Carregando sessão
   if (session === undefined) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -958,5 +1189,17 @@ export default function App() {
   }
 
   if (!session) return <LoginScreen />
+  if (!onboardingDone) {
+    return (
+      <OnboardingScreen
+        session={session}
+        onComplete={async () => {
+          const { data: { session: refreshed } } = await supabase.auth.getSession()
+          setSession(refreshed)
+          setOnboardingDone(true)
+        }}
+      />
+    )
+  }
   return <Dashboard session={session} />
 }
