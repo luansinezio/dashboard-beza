@@ -520,7 +520,21 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit }) => {
 function Dashboard({ session }) {
   const userId = session.user.id
   const userEmail = session.user.email
-  const userName = session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
+
+  const [displayName, setDisplayName] = useState(
+    session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
+  )
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState(displayName)
+  const nameInputRef = useRef(null)
+
+  const handleNameSave = async () => {
+    const trimmed = nameInput.trim()
+    if (!trimmed) { setNameInput(displayName); setEditingName(false); return }
+    await supabase.auth.updateUser({ data: { full_name: trimmed } })
+    setDisplayName(trimmed)
+    setEditingName(false)
+  }
 
   const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
   const [avatarHover, setAvatarHover] = useState(false)
@@ -699,7 +713,35 @@ function Dashboard({ session }) {
           </div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>Dashboard</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{userName}</div>
+            {editingName ? (
+              <input
+                ref={nameInputRef}
+                value={nameInput}
+                onChange={e => setNameInput(e.target.value)}
+                onBlur={handleNameSave}
+                onKeyDown={e => { if (e.key === 'Enter') handleNameSave(); if (e.key === 'Escape') { setNameInput(displayName); setEditingName(false) } }}
+                autoFocus
+                style={{
+                  fontSize: 11, color: 'var(--text)', background: 'var(--surface2)',
+                  border: '1px solid var(--accent)', borderRadius: 4,
+                  padding: '1px 6px', outline: 'none', width: 140,
+                }}
+              />
+            ) : (
+              <div
+                onClick={() => { setNameInput(displayName); setEditingName(true) }}
+                title="Clique para editar seu nome"
+                style={{
+                  fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                {displayName}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </div>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
