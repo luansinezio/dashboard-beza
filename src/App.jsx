@@ -443,21 +443,13 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
 }
 
 // ─── Componente: Item de tarefa ─────────────────────────────────────────────
-const TaskItem = ({ task, categories, onToggle, onDelete, onEdit, overloaded, onReallocate }) => {
+const TaskItem = ({ task, categories, onToggle, onDelete, onEdit, overloaded, onOpenReallocate }) => {
   const [expanded, setExpanded] = useState(false)
-  const [showRelocate, setShowRelocate] = useState(false)
-  const [customDate, setCustomDate] = useState('')
   const category = categories.find(c => c.id === task.category_id)
   const h = Math.floor(task.estimated_minutes / 60)
   const m = task.estimated_minutes % 60
   const timeStr = h > 0 ? `${h}h${m > 0 ? `${m}m` : ''}` : `${m}min`
   const isOverloaded = overloaded && !task.completed
-
-  const quickOptions = [
-    { label: 'Amanhã', date: addDays(today(), 1) },
-    { label: 'Em 2 dias', date: addDays(today(), 2) },
-    { label: 'Semana que vem', date: addDays(today(), 7) },
-  ]
 
   return (
     <div className="glass" style={{
@@ -518,45 +510,15 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit, overloaded, on
               {task.notes}
             </div>
           )}
-
-          {/* Painel de realocação */}
-          {isOverloaded && showRelocate && (
-            <div style={{ marginTop: 12, padding: '12px', background: 'var(--surface)', border: '1px solid #ef444430', borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', marginBottom: 8 }}>MOVER PARA</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {quickOptions.map(opt => (
-                  <button key={opt.label} onClick={() => { onReallocate(task.id, opt.date); setShowRelocate(false) }}
-                    style={{ padding: '5px 12px', borderRadius: 50, fontSize: 12, fontWeight: 500, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer' }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="date"
-                  value={customDate}
-                  min={addDays(today(), 1)}
-                  onChange={e => setCustomDate(e.target.value)}
-                  style={{ flex: 1, padding: '7px 10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none' }}
-                />
-                <button
-                  onClick={() => { if (customDate) { onReallocate(task.id, customDate); setShowRelocate(false) } }}
-                  disabled={!customDate}
-                  style={{ padding: '7px 14px', background: customDate ? '#ef4444' : 'var(--surface2)', border: 'none', borderRadius: 8, color: customDate ? '#fff' : 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: customDate ? 'pointer' : 'default' }}>
-                  Mover
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
           {isOverloaded && (
             <button
-              onClick={() => setShowRelocate(v => !v)}
+              onClick={() => onOpenReallocate(task)}
               style={{
                 padding: '5px 10px', borderRadius: 50,
-                background: showRelocate ? '#ef444420' : '#ef444415',
+                background: '#ef444415',
                 border: '1px solid #ef444440',
                 color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -808,6 +770,125 @@ const OnboardingScreen = ({ session, onComplete }) => {
 }
 
 // ─── Dashboard (app principal autenticado) ──────────────────────────────────
+// ─── Realocar Modal ───────────────────────────────────────────────────────────
+const ReallocateModal = ({ task, onMove, onClose }) => {
+  const [customDate, setCustomDate] = useState('')
+  const quickOptions = [
+    { label: 'Amanhã', date: addDays(today(), 1) },
+    { label: 'Em 2 dias', date: addDays(today(), 2) },
+    { label: 'Semana que vem', date: addDays(today(), 7) },
+  ]
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 8500,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px) saturate(140%)',
+        padding: 20,
+      }}
+    >
+      <div
+        className="glass"
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)', border: '1px solid var(--glass-border)',
+          borderRadius: 'var(--radius)', padding: 28,
+          width: '100%', maxWidth: 380,
+          boxShadow: 'var(--glass-shadow)',
+          animation: 'slideUpToast 0.2s ease',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', letterSpacing: 0.5, marginBottom: 4 }}>REALOCAR TAREFA</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{task.title}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, marginLeft: 12, flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        {/* Quick options */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 10, letterSpacing: 0.4 }}>MOVER PARA</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {quickOptions.map(opt => (
+              <button
+                key={opt.label}
+                onClick={() => { onMove(task.id, opt.date); onClose() }}
+                style={{
+                  padding: '8px 16px', borderRadius: 50,
+                  background: 'var(--surface2)', border: '1px solid var(--border)',
+                  color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-border)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--surface2)'}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ou escolha uma data</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        {/* Custom date */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="date"
+            value={customDate}
+            min={addDays(today(), 1)}
+            onChange={e => setCustomDate(e.target.value)}
+            style={{
+              flex: 1, padding: '10px 14px',
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-input)', color: 'var(--text)',
+              fontSize: 14, outline: 'none',
+            }}
+          />
+          <button
+            onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }}
+            disabled={!customDate}
+            style={{
+              padding: '10px 20px', borderRadius: 'var(--radius-sm)',
+              background: customDate ? 'var(--accent)' : 'var(--surface2)',
+              border: 'none',
+              color: customDate ? '#fff' : 'var(--text-muted)',
+              fontSize: 14, fontWeight: 600,
+              cursor: customDate ? 'pointer' : 'default',
+              transition: 'background 0.15s',
+            }}
+          >
+            Mover
+          </button>
+        </div>
+
+        {/* Cancel */}
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%', marginTop: 14, padding: '10px',
+            background: 'transparent', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
+            fontSize: 13, cursor: 'pointer',
+          }}
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Undo Toast ──────────────────────────────────────────────────────────────
 const UndoToast = ({ toast, onUndo }) => {
   if (!toast) return null
@@ -921,6 +1002,7 @@ function Dashboard({ session }) {
 
   // ─── Delete confirm ────────────────────────────────────────────────────────
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [reallocateTask, setReallocateTask] = useState(null)
 
   const [displayName, setDisplayName] = useState(
     session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
@@ -1338,7 +1420,7 @@ function Dashboard({ session }) {
                     onDelete={handleDelete}
                     onEdit={t => { setEditingTask(t); setShowModal(true) }}
                     overloaded={isOverloaded}
-                    onReallocate={handleReallocate}
+                    onOpenReallocate={task => setReallocateTask(task)}
                   />
                 ))}
               </>
@@ -1357,7 +1439,7 @@ function Dashboard({ session }) {
                     onDelete={handleDelete}
                     onEdit={t => { setEditingTask(t); setShowModal(true) }}
                     overloaded={false}
-                    onReallocate={handleReallocate}
+                    onOpenReallocate={task => setReallocateTask(task)}
                   />
                 ))}
               </>
@@ -1385,6 +1467,14 @@ function Dashboard({ session }) {
             executeDelete(deleteConfirmId)
           }}
           onCancel={() => setDeleteConfirmId(null)}
+        />
+      )}
+
+      {reallocateTask && (
+        <ReallocateModal
+          task={reallocateTask}
+          onMove={handleReallocate}
+          onClose={() => setReallocateTask(null)}
         />
       )}
 
