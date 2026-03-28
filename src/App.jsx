@@ -1009,7 +1009,7 @@ function Dashboard({ session }) {
               {formatDisplay(selectedDate)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 2 }}>
-              {isViewingToday && <span style={{ fontSize: 11, background: '#7c5cfc22', color: 'var(--accent)', padding: '1px 8px', borderRadius: 999, border: '1px solid #7c5cfc44' }}>Hoje</span>}
+              {isViewingToday && <span style={{ fontSize: 11, background: '#9692E122', color: 'var(--accent)', padding: '1px 8px', borderRadius: 999, border: '1px solid #9692E144' }}>Hoje</span>}
               {isViewingPast && !isViewingToday && <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '1px 8px', borderRadius: 999, border: '1px solid #ef444433' }}>Passado</span>}
               {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#22c55e11', color: '#22c55e', padding: '1px 8px', borderRadius: 999, border: '1px solid #22c55e33' }}>Futuro</span>}
               {!isViewingToday && (
