@@ -344,96 +344,75 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
 
   const presets = [30, 60, 90, 120]
 
+  const inputStyle = { width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }
+  const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
+
   return (
-    <div className="glass-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div className="glass" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, width: '100%', maxWidth: 460 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer' }}>
             <Icon name="x" size={20} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>TAREFA</label>
-            <input
-              autoFocus
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-              placeholder="Descreva a tarefa..."
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
-            />
+            <label style={labelStyle}>Tarefa</label>
+            <input autoFocus value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSave()} placeholder="Descreva a tarefa..." style={inputStyle} />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>CATEGORIA</label>
-            <select
-              value={categoryId}
-              onChange={e => setCategoryId(e.target.value)}
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: categoryId ? 'var(--text)' : 'var(--text-muted)', fontSize: 14, outline: 'none' }}
-            >
+            <label style={labelStyle}>Categoria</label>
+            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} style={{ ...inputStyle, color: categoryId ? 'var(--text)' : 'var(--text-muted)' }}>
               <option value="">Sem categoria</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
 
           <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>ESTIMATIVA DE TEMPO</label>
+            <label style={labelStyle}>Estimativa de tempo</label>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               {presets.map(p => (
-                <button
-                  key={p}
-                  onClick={() => setMinutes(p)}
-                  style={{
-                    flex: 1, padding: '8px 4px', borderRadius: 'var(--radius-sm)', fontSize: 12, fontWeight: 500,
-                    background: minutes === p ? 'var(--accent)' : 'var(--surface2)',
-                    border: `1px solid ${minutes === p ? 'var(--accent)' : 'var(--border)'}`,
-                    color: minutes === p ? '#fff' : 'var(--text-muted)',
-                  }}
-                >
+                <button key={p} onClick={() => setMinutes(p)} style={{
+                  flex: 1, padding: '8px 4px', borderRadius: 'var(--radius-sm)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  background: minutes === p ? 'var(--accent)' : 'var(--modal-input-bg)',
+                  border: `1px solid ${minutes === p ? 'var(--accent)' : 'var(--modal-input-border)'}`,
+                  color: minutes === p ? '#fff' : 'var(--text-muted)',
+                  boxShadow: minutes === p ? 'var(--btn-glass-shadow)' : 'none',
+                }}>
                   {p < 60 ? `${p}min` : `${p / 60}h`}
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type="number"
-                value={minutes}
-                onChange={e => setMinutes(Math.max(5, Number(e.target.value)))}
-                min={5}
-                step={5}
-                style={{ width: 90, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
-              />
+              <input type="number" value={minutes} onChange={e => setMinutes(Math.max(5, Number(e.target.value)))} min={5} step={5}
+                style={{ width: 90, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>minutos</span>
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>NOTAS (opcional)</label>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Detalhes, links, contexto..."
-              rows={2}
-              style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'vertical' }}
-            />
+            <label style={labelStyle}>Notas (opcional)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Detalhes, links, contexto..." rows={2}
+              style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-          <button
-            onClick={onClose}
-            style={{ flex: 1, padding: '10px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 14 }}
-          >
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>
             Cancelar
           </button>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim() || saving}
-            style={{ flex: 2, padding: '10px', background: title.trim() ? 'var(--accent)' : 'var(--surface2)', border: 'none', borderRadius: 'var(--radius-sm)', color: title.trim() ? '#fff' : 'var(--text-muted)', fontSize: 14, fontWeight: 600 }}
-          >
+          <button onClick={handleSave} disabled={!title.trim() || saving} style={{
+            flex: 2, padding: '11px',
+            background: title.trim() ? 'var(--accent)' : 'var(--modal-input-bg)',
+            border: title.trim() ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
+            borderRadius: 'var(--radius-sm)',
+            color: title.trim() ? '#fff' : 'var(--text-muted)',
+            fontSize: 14, fontWeight: 700, cursor: title.trim() ? 'pointer' : 'default',
+            boxShadow: title.trim() ? 'var(--btn-glass-shadow)' : 'none',
+          }}>
             {saving ? 'Salvando...' : task ? 'Salvar alterações' : 'Adicionar tarefa'}
           </button>
         </div>
@@ -780,31 +759,24 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
   ]
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 8500,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px) saturate(140%)',
-        padding: 20,
-      }}
-    >
-      <div
-        className="glass"
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: 'var(--surface)', border: '1px solid var(--glass-border)',
-          borderRadius: 'var(--radius)', padding: 28,
-          width: '100%', maxWidth: 380,
-          boxShadow: 'var(--glass-shadow)',
-          animation: 'slideUpToast 0.2s ease',
-        }}
-      >
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 8500,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)',
+      padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
+        borderRadius: 'var(--radius)', padding: 28,
+        width: '100%', maxWidth: 380,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+        animation: 'slideUpToast 0.2s ease',
+      }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', letterSpacing: 0.5, marginBottom: 4 }}>REALOCAR TAREFA</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{task.title}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 4 }}>Realocar tarefa</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{task.title}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, marginLeft: 12, flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -812,21 +784,18 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
         </div>
 
         {/* Quick options */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 10, letterSpacing: 0.4 }}>MOVER PARA</div>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, marginBottom: 10 }}>Mover para</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {quickOptions.map(opt => (
-              <button
-                key={opt.label}
-                onClick={() => { onMove(task.id, opt.date); onClose() }}
+              <button key={opt.label} onClick={() => { onMove(task.id, opt.date); onClose() }}
                 style={{
                   padding: '8px 16px', borderRadius: 50,
-                  background: 'var(--surface2)', border: '1px solid var(--border)',
+                  background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)',
                   color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-border)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--surface2)'}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.border = '1px solid var(--accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--modal-input-bg)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.border = '1px solid var(--modal-input-border)' }}
               >
                 {opt.label}
               </button>
@@ -836,52 +805,36 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
 
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--modal-input-border)' }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ou escolha uma data</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--modal-input-border)' }} />
         </div>
 
         {/* Custom date */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            type="date"
-            value={customDate}
-            min={addDays(today(), 1)}
-            onChange={e => setCustomDate(e.target.value)}
-            style={{
-              flex: 1, padding: '10px 14px',
-              background: 'var(--surface2)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-input)', color: 'var(--text)',
-              fontSize: 14, outline: 'none',
-            }}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input type="date" value={customDate} min={addDays(today(), 1)} onChange={e => setCustomDate(e.target.value)}
+            style={{ flex: 1, padding: '10px 14px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }}
           />
-          <button
-            onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }}
-            disabled={!customDate}
+          <button onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }} disabled={!customDate}
             style={{
               padding: '10px 20px', borderRadius: 'var(--radius-sm)',
-              background: customDate ? 'var(--accent)' : 'var(--surface2)',
-              border: 'none',
+              background: customDate ? 'var(--accent)' : 'var(--modal-input-bg)',
+              border: customDate ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
               color: customDate ? '#fff' : 'var(--text-muted)',
-              fontSize: 14, fontWeight: 600,
-              cursor: customDate ? 'pointer' : 'default',
-              transition: 'background 0.15s',
-            }}
-          >
+              fontSize: 14, fontWeight: 700, cursor: customDate ? 'pointer' : 'default',
+              boxShadow: customDate ? 'var(--btn-glass-shadow)' : 'none',
+            }}>
             Mover
           </button>
         </div>
 
         {/* Cancel */}
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', marginTop: 14, padding: '10px',
-            background: 'transparent', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
-            fontSize: 13, cursor: 'pointer',
-          }}
-        >
+        <button onClick={onClose} style={{
+          width: '100%', padding: '10px',
+          background: 'transparent', border: '1px solid var(--modal-input-border)',
+          borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
+          fontSize: 13, cursor: 'pointer',
+        }}>
           Cancelar
         </button>
       </div>
@@ -918,37 +871,39 @@ const UndoToast = ({ toast, onUndo }) => {
 const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
   const [neverAsk, setNeverAsk] = useState(false)
   return (
-    <div style={{
+    <div onClick={onCancel} style={{
       position: 'fixed', inset: 0, zIndex: 8000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
-    }} onClick={onCancel}>
-      <div className="glass" onClick={e => e.stopPropagation()} style={{
-        background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)', padding: '28px 28px 24px',
+      background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
+        borderRadius: 'var(--radius)', padding: '32px 28px 24px',
         maxWidth: 360, width: '90%', textAlign: 'center',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease',
       }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>🗑️</div>
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Excluir esta tarefa?</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 36, marginBottom: 14 }}>🗑️</div>
+        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Excluir esta tarefa?</div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
           Você pode desfazer nos próximos segundos após a exclusão.
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)', marginBottom: 22, cursor: 'pointer' }}>
           <input type="checkbox" checked={neverAsk} onChange={e => setNeverAsk(e.target.checked)} style={{ accentColor: 'var(--accent)', width: 14, height: 14 }} />
           Não perguntar novamente
         </label>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onCancel} style={{
-            flex: 1, padding: '10px', background: 'var(--surface2)',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+            flex: 1, padding: '11px', background: 'var(--modal-input-bg)',
+            border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)',
             color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
           }}>
             Cancelar
           </button>
           <button onClick={() => onConfirm(neverAsk)} style={{
-            flex: 1, padding: '10px', background: '#ef4444',
-            border: 'none', borderRadius: 'var(--radius-sm)',
+            flex: 1, padding: '11px', background: '#ef4444',
+            border: '1px solid rgba(255,255,255,0.18)', borderRadius: 'var(--radius-sm)',
             color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.2) inset, 0 4px 14px rgba(239,68,68,0.3)',
           }}>
             Excluir
           </button>
