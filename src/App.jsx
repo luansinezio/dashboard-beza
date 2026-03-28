@@ -1055,11 +1055,13 @@ function Dashboard({ session }) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
             <button
               onClick={() => setFilterCategory('all')}
+              className={filterCategory === 'all' ? 'glass' : ''}
               style={{
                 padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500, flexShrink: 0,
-                background: filterCategory === 'all' ? 'var(--accent)' : 'var(--surface)',
-                border: `1px solid ${filterCategory === 'all' ? 'var(--accent)' : 'var(--border)'}`,
-                color: filterCategory === 'all' ? '#fff' : 'var(--text-muted)',
+                background: filterCategory === 'all' ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
+                border: `1px solid ${filterCategory === 'all' ? 'rgba(255,255,255,0.22)' : 'var(--border)'}`,
+                color: filterCategory === 'all' ? 'var(--text)' : 'var(--text-muted)',
+                fontWeight: filterCategory === 'all' ? 600 : 500,
               }}
             >
               Todas ({tasks.length})
@@ -1067,16 +1069,19 @@ function Dashboard({ session }) {
             {categories
               .filter(c => tasks.some(t => t.category_id === c.id))
               .map(c => {
+                const isActive = filterCategory === c.id
                 const count = tasks.filter(t => t.category_id === c.id).length
                 return (
                   <button
                     key={c.id}
-                    onClick={() => setFilterCategory(filterCategory === c.id ? 'all' : c.id)}
+                    onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
+                    className={isActive ? 'glass' : ''}
                     style={{
-                      padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500, flexShrink: 0,
-                      background: filterCategory === c.id ? c.color : 'var(--surface)',
-                      border: `1px solid ${filterCategory === c.id ? c.color : 'var(--border)'}`,
-                      color: filterCategory === c.id ? '#fff' : 'var(--text-muted)',
+                      padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
+                      background: isActive ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
+                      border: `1px solid ${isActive ? 'rgba(255,255,255,0.22)' : 'var(--border)'}`,
+                      color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                      fontWeight: isActive ? 600 : 500,
                     }}
                   >
                     {c.name} ({count})
