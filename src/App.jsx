@@ -328,12 +328,13 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
 }
 
 // ─── Componente: Modal de adição/edição de tarefa ──────────────────────────
-const TaskModal = ({ task, categories, onSave, onClose }) => {
+const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory }) => {
   const [title, setTitle] = useState(task?.title || '')
   const [categoryId, setCategoryId] = useState(task?.category_id || '')
   const [minutes, setMinutes] = useState(task?.estimated_minutes || 60)
   const [notes, setNotes] = useState(task?.notes || '')
   const [saving, setSaving] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const handleSave = async () => {
     if (!title.trim()) return
@@ -365,10 +366,71 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
 
           <div>
             <label style={labelStyle}>Categoria</label>
-            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} style={{ ...inputStyle, color: categoryId ? 'var(--text)' : 'var(--text-muted)' }}>
-              <option value="">Sem categoria</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <div
+                onClick={() => setDropdownOpen(o => !o)}
+                style={{
+                  ...inputStyle, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  userSelect: 'none',
+                }}
+              >
+                {categoryId ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: categories.find(c => c.id === categoryId)?.color || '#666', flexShrink: 0 }} />
+                    {categories.find(c => c.id === categoryId)?.name}
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)' }}>Sem categoria</span>
+                )}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ opacity: 0.45, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+
+              {dropdownOpen && (
+                <>
+                  <div onClick={() => setDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1500 }} />
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 2000,
+                    background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
+                    borderRadius: 12, overflow: 'hidden',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+                    animation: 'modalIn 0.12s ease',
+                  }}>
+                    <div
+                      onClick={() => { setCategoryId(''); setDropdownOpen(false) }}
+                      style={{ padding: '10px 14px', fontSize: 14, cursor: 'pointer', color: 'var(--text-muted)', background: !categoryId ? 'var(--modal-input-bg)' : 'transparent' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = !categoryId ? 'var(--modal-input-bg)' : 'transparent' }}
+                    >
+                      Sem categoria
+                    </div>
+                    {categories.map(c => (
+                      <div
+                        key={c.id}
+                        onClick={() => { setCategoryId(c.id); setDropdownOpen(false) }}
+                        style={{ padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: categoryId === c.id ? 'var(--modal-input-bg)' : 'transparent' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = categoryId === c.id ? 'var(--modal-input-bg)' : 'transparent' }}
+                      >
+                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.color || '#666', flexShrink: 0 }} />
+                        {c.name}
+                      </div>
+                    ))}
+                    <div
+                      onClick={() => { setDropdownOpen(false); onRequestNewCategory?.() }}
+                      style={{ padding: '10px 14px', fontSize: 14, cursor: 'pointer', color: 'var(--accent)', fontWeight: 600, borderTop: '1px solid var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 6 }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Nova label
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           <div>
@@ -748,6 +810,120 @@ const OnboardingScreen = ({ session, onComplete }) => {
   )
 }
 
+// ─── Paleta de cores para labels ─────────────────────────────────────────────
+const LABEL_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#84cc16',
+  '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899',
+  '#14b8a6', '#f43f5e', '#64748b', '#a16207',
+]
+
+// ─── Modal de criação de label ────────────────────────────────────────────────
+const CategoryModal = ({ onSave, onClose }) => {
+  const [name, setName] = useState('')
+  const [color, setColor] = useState('#3b82f6')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    const { data } = await supabase.from('categories').insert({
+      name: name.trim(),
+      color,
+    }).select().single()
+    if (data) onSave(data)
+    setSaving(false)
+    onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 9000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)',
+      padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
+        borderRadius: 'var(--modal-radius)', padding: 28,
+        width: '100%', maxWidth: 360,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+        animation: 'modalIn 0.18s ease',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nova label</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Nome</label>
+          <input
+            autoFocus
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSave()}
+            placeholder="Ex: Reunião, Criação, Financeiro…"
+            style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: name.trim() ? 18 : 24 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, display: 'block' }}>Cor</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {LABEL_COLORS.map(c => (
+              <div
+                key={c}
+                onClick={() => setColor(c)}
+                style={{
+                  width: 28, height: 28, borderRadius: '50%', background: c, cursor: 'pointer',
+                  outline: color === c ? `3px solid ${c}` : '3px solid transparent',
+                  outlineOffset: 2, transition: 'outline 0.12s',
+                  boxShadow: color === c ? `0 0 0 1px rgba(0,0,0,0.15)` : 'none',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {name.trim() && (
+          <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Prévia:</span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '2px 8px', borderRadius: 999,
+              fontSize: 11, fontWeight: 500,
+              backgroundColor: color + '22', color,
+              border: `1px solid ${color}44`,
+            }}>
+              {name}
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '11px', background: 'var(--modal-input-bg)',
+            border: '1px solid var(--modal-input-border)', borderRadius: 12,
+            color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
+          }}>Cancelar</button>
+          <button onClick={handleSave} disabled={!name.trim() || saving} style={{
+            flex: 2, padding: '11px',
+            background: name.trim() ? 'var(--accent)' : 'var(--modal-input-bg)',
+            border: name.trim() ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
+            borderRadius: 12,
+            color: name.trim() ? '#fff' : 'var(--text-muted)',
+            fontSize: 14, fontWeight: 700, cursor: name.trim() ? 'pointer' : 'default',
+            boxShadow: name.trim() ? 'var(--btn-glass-shadow)' : 'none',
+          }}>
+            {saving ? 'Criando…' : 'Criar label'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard (app principal autenticado) ──────────────────────────────────
 // ─── Realocar Modal ───────────────────────────────────────────────────────────
 const ReallocateModal = ({ task, onMove, onClose }) => {
@@ -966,6 +1142,11 @@ function Dashboard({ session }) {
   // ─── Delete confirm ────────────────────────────────────────────────────────
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [reallocateTask, setReallocateTask] = useState(null)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+
+  const handleCreateCategory = (newCat) => {
+    setCategories(prev => [...prev, newCat].sort((a, b) => a.name.localeCompare(b.name)))
+  }
 
   const [displayName, setDisplayName] = useState(
     session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
@@ -1309,45 +1490,66 @@ function Dashboard({ session }) {
         )}
 
         {/* Filtro de categorias */}
-        {categories.length > 0 && tasks.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
-            <button
-              onClick={() => setFilterCategory('all')}
-              className={filterCategory === 'all' ? 'glass' : ''}
-              style={{
-                padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500, flexShrink: 0,
-                background: filterCategory === 'all' ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
-                border: `1px solid ${filterCategory === 'all' ? 'rgba(255,255,255,0.22)' : 'var(--border)'}`,
-                color: filterCategory === 'all' ? 'var(--text)' : 'var(--text-muted)',
-                fontWeight: filterCategory === 'all' ? 600 : 500,
-              }}
-            >
-              Todas ({tasks.length})
-            </button>
-            {categories
-              .filter(c => tasks.some(t => t.category_id === c.id))
-              .map(c => {
-                const isActive = filterCategory === c.id
-                const count = tasks.filter(t => t.category_id === c.id).length
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
-                    className={isActive ? 'glass' : ''}
-                    style={{
-                      padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
-                      background: isActive ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
-                      border: `1px solid ${isActive ? 'rgba(255,255,255,0.22)' : 'var(--border)'}`,
-                      color: isActive ? 'var(--text)' : 'var(--text-muted)',
-                      fontWeight: isActive ? 600 : 500,
-                    }}
-                  >
-                    {c.name} ({count})
-                  </button>
-                )
-              })}
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4, alignItems: 'center' }}>
+          {tasks.length > 0 && (
+            <>
+              <button
+                onClick={() => setFilterCategory('all')}
+                className={filterCategory === 'all' ? 'glass' : ''}
+                style={{
+                  padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
+                  background: filterCategory === 'all' ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
+                  border: `1px solid ${filterCategory === 'all' ? 'rgba(255,255,255,0.22)' : 'var(--border)'}`,
+                  color: filterCategory === 'all' ? 'var(--text)' : 'var(--text-muted)',
+                  fontWeight: filterCategory === 'all' ? 600 : 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Todas ({tasks.length})
+              </button>
+              {categories
+                .filter(c => tasks.some(t => t.category_id === c.id))
+                .map(c => {
+                  const isActive = filterCategory === c.id
+                  const count = tasks.filter(t => t.category_id === c.id).length
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
+                      className={isActive ? 'glass' : ''}
+                      style={{
+                        padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
+                        background: isActive ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
+                        border: `1px solid ${isActive ? (c.color + '55') : 'var(--border)'}`,
+                        color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                        fontWeight: isActive ? 600 : 500,
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <span style={{
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: c.color || '#666', flexShrink: 0,
+                        opacity: isActive ? 1 : 0.6,
+                      }} />
+                      {c.name} ({count})
+                    </button>
+                  )
+                })}
+            </>
+          )}
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            title="Nova label"
+            style={{
+              width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 1,
+            }}
+          >+</button>
+        </div>
 
         {/* Lista de tarefas */}
         {loading ? (
@@ -1419,6 +1621,7 @@ function Dashboard({ session }) {
           categories={categories}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditingTask(null) }}
+          onRequestNewCategory={() => setShowCategoryModal(true)}
         />
       )}
 
@@ -1438,6 +1641,13 @@ function Dashboard({ session }) {
           task={reallocateTask}
           onMove={handleReallocate}
           onClose={() => setReallocateTask(null)}
+        />
+      )}
+
+      {showCategoryModal && (
+        <CategoryModal
+          onSave={handleCreateCategory}
+          onClose={() => setShowCategoryModal(false)}
         />
       )}
 
