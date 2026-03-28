@@ -962,31 +962,31 @@ function Dashboard({ session }) {
           </div>
         </div>
 
-        {/* Grupo direito: nova tarefa + logout */}
-        <div className="glass" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'var(--surface)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: 50, padding: '6px',
-        }}>
+        {/* Grupo direito: nova tarefa + logout separados */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => { setEditingTask(null); setShowModal(true) }}
+            className="glass"
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 16px', background: 'var(--accent)', border: 'none',
-              borderRadius: 50, color: '#fff', fontSize: 13, fontWeight: 600,
+              padding: '8px 18px',
+              background: 'var(--surface)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 50, color: 'var(--accent)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            <Icon name="plus" size={15} color="#fff" />
+            <Icon name="plus" size={15} color="var(--accent)" />
             Nova tarefa
           </button>
           <button
             onClick={handleLogout}
             title="Sair"
+            className="glass"
             style={{
-              width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'var(--surface2)', border: '1px solid var(--glass-border)',
-              borderRadius: '50%', color: 'var(--text-muted)',
+              width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--surface)', border: '1px solid var(--glass-border)',
+              borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer',
             }}
           >
             <Icon name="logout" size={15} />
@@ -1169,6 +1169,162 @@ function Dashboard({ session }) {
   )
 }
 
+// ─── Tela de Teste Gratuito (trial link) ────────────────────────────────────
+const TrialSignupScreen = () => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState(null)
+  const [showPass, setShowPass] = useState(false)
+
+  const handleTrial = async (e) => {
+    e.preventDefault()
+    if (!name.trim() || !email.trim() || !password.trim()) return
+    setLoading(true)
+    setMessage(null)
+    const { error } = await supabase.auth.signUp({
+      email, password,
+      options: {
+        data: {
+          full_name: name.trim(),
+          is_trial: true,
+          trial_started_at: new Date().toISOString(),
+          onboarding_complete: true,
+          work_hours: 8,
+        }
+      }
+    })
+    if (error) {
+      setMessage({ type: 'error', text: error.message.includes('already') ? 'Este e-mail já tem um teste ativo. Faça login abaixo.' : error.message })
+    } else {
+      setMessage({ type: 'success', text: 'Conta de teste criada! Entrando...' })
+    }
+    setLoading(false)
+  }
+
+  const handleLogin = async () => {
+    if (!email || !password) return
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setMessage({ type: 'error', text: 'E-mail ou senha incorretos.' })
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <img src="/dashboard-beza/favicon.png" alt="" style={{ width: 72, height: 72, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Teste gratuito — 24h</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Crie suas tarefas e explore o Dashboard por um dia, sem compromisso.</div>
+        </div>
+
+        {/* Badge de trial */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+          {['⏱ 24 horas', '✓ Acesso completo', '✓ Sem cartão'].map(t => (
+            <span key={t} style={{ fontSize: 11, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 50, padding: '4px 10px', color: 'var(--text-muted)' }}>{t}</span>
+          ))}
+        </div>
+
+        <div className="glass" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 28 }}>
+          {message && (
+            <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13,
+              background: message.type === 'error' ? '#ef444415' : '#4caf5015',
+              border: `1px solid ${message.type === 'error' ? '#ef444440' : '#4caf5040'}`,
+              color: message.type === 'error' ? '#ef4444' : '#4caf50' }}>
+              {message.text}
+            </div>
+          )}
+          <form onSubmit={handleTrial} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>SEU NOME</label>
+              <input autoFocus value={name} onChange={e => setName(e.target.value)} required placeholder="Como você se chama?"
+                style={{ width: '100%', padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>E-MAIL</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com"
+                style={{ width: '100%', padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>SENHA</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres"
+                  style={{ width: '100%', padding: '10px 40px 10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+                <button type="button" onClick={() => setShowPass(v => !v)}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', padding: 2 }}>
+                  <Icon name={showPass ? 'eyeOff' : 'eye'} size={15} />
+                </button>
+              </div>
+            </div>
+            <button type="submit" disabled={loading || !name.trim() || !email.trim() || !password.trim()}
+              style={{ padding: '12px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 14, fontWeight: 700, marginTop: 4, opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Criando acesso...' : '🚀 Começar meu teste gratuito'}
+            </button>
+          </form>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0 14px' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>já tem acesso?</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e-mail"
+              style={{ flex: 1, padding: '9px 12px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 13, outline: 'none' }} />
+            <button onClick={handleLogin} disabled={loading}
+              style={{ padding: '9px 16px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 13 }}>
+              Entrar
+            </button>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: 'var(--text-muted)' }}>
+          Após as 24h, você precisará adquirir um plano para continuar.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tela de Trial Expirado ──────────────────────────────────────────────────
+const TrialExpiredScreen = () => {
+  const handleLogout = () => supabase.auth.signOut()
+  const MAIN_URL = 'https://luansinezio.github.io/dashboard-beza/'
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
+        <img src="/dashboard-beza/favicon.png" alt="" style={{ width: 80, height: 80, margin: '0 auto 24px', display: 'block', objectFit: 'contain', opacity: 0.6 }} />
+        <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>Seu teste gratuito expirou</div>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28, lineHeight: 1.6 }}>
+          Suas 24 horas de acesso chegaram ao fim.<br />Para continuar usando o Dashboard, crie sua conta no link principal.
+        </div>
+        <div className="glass" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>Acesse o link abaixo para criar sua conta permanente:</div>
+          <a href={MAIN_URL}
+            style={{ display: 'block', padding: '12px', background: 'var(--accent)', borderRadius: 'var(--radius-sm)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', marginBottom: 10 }}>
+            Criar minha conta →
+          </a>
+          <button onClick={handleLogout}
+            style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 13 }}>
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Helpers de trial ────────────────────────────────────────────────────────
+const IS_TRIAL_LINK = new URLSearchParams(window.location.search).get('trial') === '1'
+
+const isTrialExpired = (session) => {
+  const meta = session?.user?.user_metadata
+  if (!meta?.is_trial || !meta?.trial_started_at) return false
+  return (Date.now() - new Date(meta.trial_started_at).getTime()) > 24 * 60 * 60 * 1000
+}
+
 // ─── App raiz com controle de autenticação ──────────────────────────────────
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -1177,33 +1333,32 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (session) {
-        setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
-      }
+      if (session) setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) {
-        setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
-      }
+      if (session) setOnboardingDone(!!session.user.user_metadata?.onboarding_complete)
     })
     return () => subscription.unsubscribe()
   }, [])
 
   if (session === undefined) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ width: 40, height: 40, background: 'var(--accent)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-            <Icon name="sun" size={20} color="#fff" />
-          </div>
+          <img src="/dashboard-beza/favicon.png" alt="" style={{ width: 48, height: 48, margin: '0 auto 12px', display: 'block', objectFit: 'contain', opacity: 0.6 }} />
           Carregando...
         </div>
       </div>
     )
   }
 
-  if (!session) return <LoginScreen />
+  if (!session) {
+    return IS_TRIAL_LINK ? <TrialSignupScreen /> : <LoginScreen />
+  }
+
+  if (isTrialExpired(session)) return <TrialExpiredScreen />
+
   if (!onboardingDone) {
     return (
       <OnboardingScreen
