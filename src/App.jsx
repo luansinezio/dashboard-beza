@@ -348,8 +348,8 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer' }}>
@@ -376,7 +376,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               {presets.map(p => (
                 <button key={p} onClick={() => setMinutes(p)} style={{
-                  flex: 1, padding: '8px 4px', borderRadius: 'var(--radius-sm)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  flex: 1, padding: '8px 4px', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   background: minutes === p ? 'var(--accent)' : 'var(--modal-input-bg)',
                   border: `1px solid ${minutes === p ? 'var(--accent)' : 'var(--modal-input-border)'}`,
                   color: minutes === p ? '#fff' : 'var(--text-muted)',
@@ -388,7 +388,7 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input type="number" value={minutes} onChange={e => setMinutes(Math.max(5, Number(e.target.value)))} min={5} step={5}
-                style={{ width: 90, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+                style={{ width: 90, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, padding: '8px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>minutos</span>
             </div>
           </div>
@@ -401,14 +401,14 @@ const TaskModal = ({ task, categories, onSave, onClose }) => {
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>
             Cancelar
           </button>
           <button onClick={handleSave} disabled={!title.trim() || saving} style={{
             flex: 2, padding: '11px',
             background: title.trim() ? 'var(--accent)' : 'var(--modal-input-bg)',
             border: title.trim() ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
-            borderRadius: 'var(--radius-sm)',
+            borderRadius: 12,
             color: title.trim() ? '#fff' : 'var(--text-muted)',
             fontSize: 14, fontWeight: 700, cursor: title.trim() ? 'pointer' : 'default',
             boxShadow: title.trim() ? 'var(--btn-glass-shadow)' : 'none',
@@ -763,7 +763,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 8500,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)',
+      background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)',
       padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -771,7 +771,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
         borderRadius: 'var(--modal-radius)', padding: 28,
         width: '100%', maxWidth: 380,
         boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-        animation: 'slideUpToast 0.2s ease',
+        animation: 'modalIn 0.18s ease',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
@@ -791,7 +791,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
             {quickOptions.map(opt => (
               <button key={opt.label} onClick={() => { onMove(task.id, opt.date); onClose() }}
                 style={{
-                  padding: '8px 16px', borderRadius: 50,
+                  padding: '8px 16px', borderRadius: 12,
                   background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)',
                   color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
                 }}
@@ -825,7 +825,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
           </div>
           <button onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }} disabled={!customDate}
             style={{
-              padding: '10px 20px', borderRadius: 'var(--radius-sm)',
+              padding: '10px 20px', borderRadius: 12,
               background: customDate ? 'var(--accent)' : 'var(--modal-input-bg)',
               border: customDate ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
               color: customDate ? '#fff' : 'var(--text-muted)',
@@ -840,7 +840,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
         <button onClick={onClose} style={{
           width: '100%', padding: '10px',
           background: 'transparent', border: '1px solid var(--modal-input-border)',
-          borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)',
+          borderRadius: 12, color: 'var(--text-muted)',
           fontSize: 13, cursor: 'pointer',
         }}>
           Cancelar
@@ -882,13 +882,13 @@ const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
     <div onClick={onCancel} style={{
       position: 'fixed', inset: 0, zIndex: 8000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--modal-overlay)', backdropFilter: 'blur(12px) saturate(140%)',
+      background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
         borderRadius: 'var(--modal-radius)', padding: '32px 28px 24px',
         maxWidth: 360, width: '90%', textAlign: 'center',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'slideUpToast 0.2s ease',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease',
       }}>
         <div style={{ fontSize: 36, marginBottom: 14 }}>🗑️</div>
         <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Excluir esta tarefa?</div>
@@ -902,14 +902,14 @@ const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onCancel} style={{
             flex: 1, padding: '11px', background: 'var(--modal-input-bg)',
-            border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--modal-input-border)', borderRadius: 12,
             color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
           }}>
             Cancelar
           </button>
           <button onClick={() => onConfirm(neverAsk)} style={{
             flex: 1, padding: '11px', background: '#ef4444',
-            border: '1px solid rgba(255,255,255,0.18)', borderRadius: 'var(--radius-sm)',
+            border: '1px solid rgba(255,255,255,0.18)', borderRadius: 12,
             color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
             boxShadow: '0 0 0 1px rgba(255,255,255,0.2) inset, 0 4px 14px rgba(239,68,68,0.3)',
           }}>
