@@ -1317,7 +1317,7 @@ function Dashboard({ session }) {
   const handleCreateCategoryInline = async ({ name, color }) => {
     const { data, error } = await supabase
       .from('categories')
-      .insert([{ name, color, user_id: userId }])
+      .insert([{ name, color }])
       .select()
       .single()
     if (error || !data) return null
