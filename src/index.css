@@ -201,9 +201,13 @@ body {
   ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); }
 }
 
-/* ─── MOBILE: esconde atalho de teclado no perfil ───────────────────────── */
+/* ─── MOBILE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 639px) {
   .profile-shortcut { display: none !important; }
+  /* dots sempre visíveis em touch */
+  .dots-btn { opacity: 1 !important; }
+  /* previne zoom do iOS em inputs */
+  input:not([type="range"]), textarea, select { font-size: 16px !important; }
 }
 
 /* ─── RANGE SLIDER ───────────────────────────────────────────────────────── */
@@ -240,4 +244,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }
