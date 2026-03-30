@@ -328,13 +328,40 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
 }
 
 // ─── Componente: Modal de adição/edição de tarefa ──────────────────────────
-const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory }) => {
+const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, onEditCategory, onDeleteCategory }) => {
   const [title, setTitle] = useState(task?.title || '')
   const [categoryId, setCategoryId] = useState(task?.category_id || '')
   const [minutes, setMinutes] = useState(task?.estimated_minutes || 60)
   const [notes, setNotes] = useState(task?.notes || '')
   const [saving, setSaving] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [editingCatId, setEditingCatId] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editColor, setEditColor] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  const startEditCat = (e, cat) => {
+    e.stopPropagation()
+    setEditingCatId(cat.id)
+    setEditName(cat.name)
+    setEditColor(cat.color || '#3b82f6')
+  }
+  const cancelEditCat = (e) => { e?.stopPropagation(); setEditingCatId(null) }
+  const saveEditCat = async (e) => {
+    e.stopPropagation()
+    if (!editName.trim()) return
+    setSavingEdit(true)
+    await onEditCategory?.(editingCatId, { name: editName.trim(), color: editColor })
+    setSavingEdit(false)
+    setEditingCatId(null)
+  }
+  const deleteCat = (e, catId) => {
+    e.stopPropagation()
+    onDeleteCategory?.(catId)
+    if (categoryId === catId) setCategoryId('')
+    setEditingCatId(null)
+    setDropdownOpen(false)
+  }
 
   const handleSave = async () => {
     if (!title.trim()) return
@@ -406,16 +433,78 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory }) 
                     >
                       Sem categoria
                     </div>
-                    {categories.map(c => (
+                    {categories.map(c => editingCatId === c.id ? (
+                      /* ── Modo edição inline ── */
+                      <div key={c.id} onClick={e => e.stopPropagation()} style={{
+                        padding: '12px 14px',
+                        borderTop: '1px solid var(--modal-input-border)',
+                        borderBottom: '1px solid var(--modal-input-border)',
+                        background: 'var(--modal-input-bg)',
+                      }}>
+                        {/* Swatches de cor */}
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                          {LABEL_COLORS.map(clr => (
+                            <div key={clr} onClick={() => setEditColor(clr)} style={{
+                              width: 20, height: 20, borderRadius: '50%', background: clr, cursor: 'pointer',
+                              outline: editColor === clr ? `2px solid ${clr}` : '2px solid transparent',
+                              outlineOffset: 2, transition: 'outline 0.1s',
+                            }} />
+                          ))}
+                        </div>
+                        {/* Input nome */}
+                        <input
+                          autoFocus
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e); if (e.key === 'Escape') cancelEditCat(e) }}
+                          style={{ width: '100%', background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 8, boxSizing: 'border-box' }}
+                        />
+                        {/* Ações */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <button onClick={e => deleteCat(e, c.id)} title="Excluir label" style={{
+                            padding: '6px 8px', background: 'none', border: '1px solid #ef444440',
+                            borderRadius: 7, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                          }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                            </svg>
+                          </button>
+                          <button onClick={cancelEditCat} style={{
+                            flex: 1, padding: '6px', background: 'transparent',
+                            border: '1px solid var(--modal-input-border)', borderRadius: 7,
+                            color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
+                          }}>Cancelar</button>
+                          <button onClick={saveEditCat} disabled={!editName.trim() || savingEdit} style={{
+                            flex: 2, padding: '6px',
+                            background: editName.trim() ? 'var(--accent)' : 'var(--modal-input-bg)',
+                            border: 'none', borderRadius: 7,
+                            color: editName.trim() ? '#fff' : 'var(--text-muted)',
+                            fontSize: 12, fontWeight: 700, cursor: editName.trim() ? 'pointer' : 'default',
+                          }}>{savingEdit ? '…' : 'Salvar'}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* ── Item normal ── */
                       <div
                         key={c.id}
-                        onClick={() => { setCategoryId(c.id); setDropdownOpen(false) }}
                         style={{ padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: categoryId === c.id ? 'var(--modal-input-bg)' : 'transparent' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = categoryId === c.id ? 'var(--modal-input-bg)' : 'transparent' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)'; e.currentTarget.querySelector('.cat-edit-btn').style.opacity = '1' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = categoryId === c.id ? 'var(--modal-input-bg)' : 'transparent'; e.currentTarget.querySelector('.cat-edit-btn').style.opacity = '0' }}
                       >
-                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.color || '#666', flexShrink: 0 }} />
-                        {c.name}
+                        <div onClick={() => { setCategoryId(c.id); setDropdownOpen(false); setEditingCatId(null) }} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.color || '#666', flexShrink: 0 }} />
+                          {c.name}
+                        </div>
+                        <button
+                          className="cat-edit-btn"
+                          onClick={e => startEditCat(e, c)}
+                          title="Editar label"
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 4px', borderRadius: 4, opacity: 0, transition: 'opacity 0.15s', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                        </button>
                       </div>
                     ))}
                     <div
@@ -1149,13 +1238,16 @@ function Dashboard({ session }) {
   }
 
   const handleDeleteCategory = async (catId) => {
-    // Optimistic UI update
     setCategories(prev => prev.filter(c => c.id !== catId))
     setTasks(prev => prev.map(t => t.category_id === catId ? { ...t, category_id: null } : t))
     if (filterCategory === catId) setFilterCategory('all')
-    // Persist: desvincula tarefas e remove categoria
     await supabase.from('tasks').update({ category_id: null }).eq('category_id', catId).eq('user_id', userId)
     await supabase.from('categories').delete().eq('id', catId)
+  }
+
+  const handleEditCategory = async (catId, { name, color }) => {
+    await supabase.from('categories').update({ name, color }).eq('id', catId)
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, name, color } : c))
   }
 
   const [displayName, setDisplayName] = useState(
@@ -1523,47 +1615,27 @@ function Dashboard({ session }) {
                   const isActive = filterCategory === c.id
                   const count = tasks.filter(t => t.category_id === c.id).length
                   return (
-                    <div
+                    <button
                       key={c.id}
+                      onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
                       className={isActive ? 'glass' : ''}
                       style={{
-                        display: 'flex', alignItems: 'center',
-                        borderRadius: 999, fontSize: 12, flexShrink: 0,
+                        padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
                         background: isActive ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
                         border: `1px solid ${isActive ? (c.color + '55') : 'var(--border)'}`,
-                        overflow: 'hidden',
+                        color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                        fontWeight: isActive ? 600 : 500,
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
                       }}
                     >
-                      <div
-                        onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 6,
-                          padding: '6px 8px 6px 12px',
-                          color: isActive ? 'var(--text)' : 'var(--text-muted)',
-                          fontWeight: isActive ? 600 : 500,
-                          cursor: 'pointer', userSelect: 'none',
-                        }}
-                      >
-                        <span style={{
-                          width: 7, height: 7, borderRadius: '50%',
-                          background: c.color || '#666', flexShrink: 0,
-                          opacity: isActive ? 1 : 0.6,
-                        }} />
-                        {c.name} ({count})
-                      </div>
-                      <div
-                        onClick={() => handleDeleteCategory(c.id)}
-                        title="Remover label"
-                        style={{
-                          padding: '6px 10px 6px 4px',
-                          cursor: 'pointer', color: 'var(--text-muted)',
-                          fontSize: 13, lineHeight: 1, opacity: 0.45,
-                          transition: 'opacity 0.15s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#ef4444' }}
-                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.45'; e.currentTarget.style.color = 'var(--text-muted)' }}
-                      >×</div>
-                    </div>
+                      <span style={{
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: c.color || '#666', flexShrink: 0,
+                        opacity: isActive ? 1 : 0.6,
+                      }} />
+                      {c.name} ({count})
+                    </button>
                   )
                 })}
             </>
@@ -1652,6 +1724,8 @@ function Dashboard({ session }) {
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditingTask(null) }}
           onRequestNewCategory={() => setShowCategoryModal(true)}
+          onEditCategory={handleEditCategory}
+          onDeleteCategory={handleDeleteCategory}
         />
       )}
 
