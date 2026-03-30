@@ -437,7 +437,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                   <div style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 2000, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.28)', animation: 'modalIn 0.12s ease' }}>
 
                     {/* Busca / criar */}
-                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--modal-input-border)', background: 'var(--dropdown-bg)' }}>
+                    <div style={{ padding: '10px 12px', minHeight: 40, display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--modal-input-border)', background: 'var(--dropdown-bg)' }}>
                       <input
                         autoFocus
                         value={searchQuery}
@@ -450,7 +450,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                               const randomColor = LABEL_COLORS_NAMED[Math.floor(Math.random() * LABEL_COLORS_NAMED.length)].fg
                               const newCat = await onCreateCategory?.({ name: searchQuery.trim(), color: randomColor })
                               if (newCat) setCategoryId(newCat.id)
-                              setDropdownOpen(false); setSearchQuery('')
+                              setSearchQuery('')
                             }
                           }
                         }}
@@ -560,7 +560,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                             const randomColor = LABEL_COLORS_NAMED[Math.floor(Math.random() * LABEL_COLORS_NAMED.length)].fg
                             const newCat = await onCreateCategory?.({ name: searchQuery.trim(), color: randomColor })
                             if (newCat) setCategoryId(newCat.id)
-                            setDropdownOpen(false); setSearchQuery('')
+                            setSearchQuery('')
                           }}
                           style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--accent)', fontWeight: 500, borderTop: filteredCats.length ? '1px solid var(--modal-input-border)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
