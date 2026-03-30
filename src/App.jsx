@@ -336,7 +336,7 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
 }
 
 // ─── Componente: Modal de adição/edição de tarefa ──────────────────────────
-const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, onEditCategory, onDeleteCategory }) => {
+const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, onCreateCategory, onEditCategory, onDeleteCategory }) => {
   useScrollLock()
   const [title, setTitle] = useState(task?.title || '')
   const [categoryId, setCategoryId] = useState(task?.category_id || '')
@@ -446,7 +446,12 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                           if (e.key === 'Escape') { setDropdownOpen(false); setSearchQuery(''); setCatOptionsId(null) }
                           if (e.key === 'Enter') {
                             if (filteredCats.length === 1) { setCategoryId(filteredCats[0].id); setDropdownOpen(false); setSearchQuery('') }
-                            else if (!filteredCats.length && searchQuery.trim()) { setDropdownOpen(false); setSearchQuery(''); onRequestNewCategory?.() }
+                            else if (!filteredCats.length && searchQuery.trim()) {
+                              const randomColor = LABEL_COLORS_NAMED[Math.floor(Math.random() * LABEL_COLORS_NAMED.length)].fg
+                              const newCat = await onCreateCategory?.({ name: searchQuery.trim(), color: randomColor })
+                              if (newCat) setCategoryId(newCat.id)
+                              setDropdownOpen(false); setSearchQuery('')
+                            }
                           }
                         }}
                         placeholder="Selecione uma opção ou crie uma"
@@ -551,7 +556,12 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                       {/* Criar nova se não houver match */}
                       {searchQuery.trim() && !filteredCats.find(c => c.name.toLowerCase() === searchQuery.trim().toLowerCase()) && (
                         <div
-                          onClick={() => { setDropdownOpen(false); setSearchQuery(''); onRequestNewCategory?.() }}
+                          onClick={async () => {
+                            const randomColor = LABEL_COLORS_NAMED[Math.floor(Math.random() * LABEL_COLORS_NAMED.length)].fg
+                            const newCat = await onCreateCategory?.({ name: searchQuery.trim(), color: randomColor })
+                            if (newCat) setCategoryId(newCat.id)
+                            setDropdownOpen(false); setSearchQuery('')
+                          }}
                           style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--accent)', fontWeight: 500, borderTop: filteredCats.length ? '1px solid var(--modal-input-border)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -1304,6 +1314,17 @@ function Dashboard({ session }) {
     setCategories(prev => [...prev, newCat].sort((a, b) => a.name.localeCompare(b.name)))
   }
 
+  const handleCreateCategoryInline = async ({ name, color }) => {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([{ name, color, user_id: userId }])
+      .select()
+      .single()
+    if (error || !data) return null
+    setCategories(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return data
+  }
+
   const handleDeleteCategory = async (catId) => {
     setCategories(prev => prev.filter(c => c.id !== catId))
     setTasks(prev => prev.map(t => t.category_id === catId ? { ...t, category_id: null } : t))
@@ -1791,6 +1812,7 @@ function Dashboard({ session }) {
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditingTask(null) }}
           onRequestNewCategory={() => setShowCategoryModal(true)}
+          onCreateCategory={handleCreateCategoryInline}
           onEditCategory={handleEditCategory}
           onDeleteCategory={handleDeleteCategory}
         />
