@@ -1681,6 +1681,8 @@ function Dashboard({ session }) {
   const isOverloaded = totalPlanned > workMinutes
   const isViewingToday = isToday(selectedDate)
   const isViewingPast = isPast(selectedDate)
+  const isViewingYesterday = selectedDate === addDays(today(), -1)
+  const isViewingTomorrow = selectedDate === addDays(today(), 1)
 
   return (
     <div style={{ minHeight: '100vh', background: 'transparent' }}>
@@ -1848,22 +1850,24 @@ function Dashboard({ session }) {
                         </kbd>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>+</span>
                         {listeningShortcut ? (
-                          <div
+                          <input
+                            type="text"
                             autoFocus
-                            tabIndex={0}
+                            readOnly
+                            value="…"
                             onKeyDown={e => {
                               e.preventDefault()
+                              e.stopPropagation()
+                              if (e.key === 'Escape') { setListeningShortcut(false); return }
                               if (e.key.length === 1 && e.key !== ' ') {
                                 setShortcutKey(e.key.toLowerCase())
                                 setListeningShortcut(false)
                               }
-                              if (e.key === 'Escape') setListeningShortcut(false)
                             }}
                             onBlur={() => setListeningShortcut(false)}
-                            style={{ padding: '4px 10px', borderRadius: 6, background: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 12, fontFamily: 'monospace', color: '#fff', cursor: 'pointer', outline: 'none', minWidth: 32, textAlign: 'center' }}
-                          >
-                            …
-                          </div>
+                            onChange={() => {}}
+                            style={{ padding: '4px 10px', borderRadius: 6, background: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 12, fontFamily: 'monospace', color: '#fff', cursor: 'pointer', outline: 'none', width: 42, textAlign: 'center' }}
+                          />
                         ) : (
                           <kbd
                             onClick={() => setListeningShortcut(true)}
@@ -1982,14 +1986,20 @@ function Dashboard({ session }) {
           </button>
 
           <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            {/* Pill: Hoje / Passado / Futuro */}
+            {/* Pill: Hoje / Ontem / Amanhã / Passado / Futuro */}
             {isViewingToday && (
               <span style={{ fontSize: 11, background: '#3b82f622', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #3b82f644', whiteSpace: 'nowrap' }}>Hoje</span>
             )}
-            {isViewingPast && !isViewingToday && (
+            {isViewingYesterday && (
+              <span style={{ fontSize: 11, background: '#f59e0b18', color: '#f59e0b', padding: '2px 10px', borderRadius: 999, border: '1px solid #f59e0b44', whiteSpace: 'nowrap' }}>Ontem</span>
+            )}
+            {isViewingPast && !isViewingToday && !isViewingYesterday && (
               <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '2px 10px', borderRadius: 999, border: '1px solid #ef444433', whiteSpace: 'nowrap' }}>Passado</span>
             )}
-            {!isViewingToday && !isViewingPast && (
+            {isViewingTomorrow && (
+              <span style={{ fontSize: 11, background: '#8b5cf618', color: '#8b5cf6', padding: '2px 10px', borderRadius: 999, border: '1px solid #8b5cf644', whiteSpace: 'nowrap' }}>Amanhã</span>
+            )}
+            {!isViewingToday && !isViewingPast && !isViewingTomorrow && (
               <span style={{ fontSize: 11, background: '#4caf5011', color: '#4caf50', padding: '2px 10px', borderRadius: 999, border: '1px solid #4caf5033', whiteSpace: 'nowrap' }}>Futuro</span>
             )}
             {/* Dia da semana grande */}
@@ -2098,13 +2108,21 @@ function Dashboard({ session }) {
         ) : filteredTasks.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>
-              {isViewingToday ? '✨' : isViewingPast ? '📭' : '📋'}
+              {isViewingToday ? '✨' : isViewingYesterday ? '🌙' : isViewingPast ? '📭' : isViewingTomorrow ? '🌅' : '📋'}
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
-              {isViewingToday ? 'Nenhuma tarefa para hoje' : isViewingPast ? 'Nenhuma tarefa neste dia' : 'Nenhuma tarefa planejada'}
+              {isViewingToday ? 'Nenhuma tarefa para hoje'
+                : isViewingYesterday ? 'Ontem ficou tranquilo'
+                : isViewingPast ? 'Nenhuma tarefa neste dia'
+                : isViewingTomorrow ? 'Amanhã está em branco'
+                : 'Nenhuma tarefa planejada'}
             </div>
             <div style={{ fontSize: 13 }}>
-              {isViewingToday ? 'Adicione uma tarefa para começar o dia!' : isViewingPast ? 'Este dia não teve tarefas registradas.' : 'Que tal planejar o dia com antecedência?'}
+              {isViewingToday ? 'Adicione uma tarefa para começar o dia!'
+                : isViewingYesterday ? 'Nenhuma tarefa registrada ontem.'
+                : isViewingPast ? 'Este dia não teve tarefas registradas.'
+                : isViewingTomorrow ? 'Quem antecipa, governa. Que tal planejar já?'
+                : 'Vamos organizar esse caos com antecedência!'}
             </div>
           </div>
         ) : (
