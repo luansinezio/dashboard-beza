@@ -1629,7 +1629,7 @@ function Dashboard({ session }) {
 
                   {/* Nome */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Meu nome</label>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Meu nome</label>
                     <input
                       value={nameEdit}
                       onChange={e => setNameEdit(e.target.value)}
@@ -1642,38 +1642,32 @@ function Dashboard({ session }) {
 
                   {/* E-mail */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Meu e-mail</label>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Meu e-mail</label>
                     <div style={{ padding: '10px 12px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', fontSize: 14, color: 'var(--text-muted)' }}>
                       {userEmail}
                     </div>
                   </div>
 
-                  {/* Horas de trabalho */}
+                  {/* Horas de trabalho — slider estilo onboarding */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Horas de trabalho por dia</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input
-                        type="number" min="1" max="24"
-                        value={hoursEdit}
-                        onChange={e => setHoursEdit(e.target.value)}
-                        onBlur={handleHoursSave}
-                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                        style={{ width: 70, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', fontSize: 14, color: 'var(--text)', outline: 'none', textAlign: 'center' }}
-                      />
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>horas</span>
-                      {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Salvando…</span>}
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, display: 'block' }}>Horas de trabalho por dia</label>
+                    <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                      <span style={{ fontSize: 42, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{hoursEdit}</span>
+                      <span style={{ fontSize: 14, color: 'var(--text-muted)', marginLeft: 6 }}>horas</span>
+                      {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>Salvando…</span>}
                     </div>
-                  </div>
-
-                  {/* Senha */}
-                  <div>
-                    <button
-                      onClick={handlePasswordReset}
-                      disabled={resetSent}
-                      style={{ fontSize: 13, padding: '9px 16px', borderRadius: 'var(--radius-input)', border: '1px solid var(--modal-input-border)', background: 'transparent', color: resetSent ? 'var(--text-muted)' : 'var(--text)', cursor: resetSent ? 'default' : 'pointer', fontWeight: 500, width: '100%', textAlign: 'left' }}
-                    >
-                      {resetSent ? '✓ Link de redefinição enviado para o e-mail' : 'Redefinir senha'}
-                    </button>
+                    <input
+                      type="range" min={1} max={16} step={1}
+                      value={hoursEdit}
+                      onChange={e => setHoursEdit(Number(e.target.value))}
+                      onMouseUp={handleHoursSave}
+                      onTouchEnd={handleHoursSave}
+                      style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer', height: 4 }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>1h</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>16h</span>
+                    </div>
                   </div>
 
                 </div>
@@ -1683,7 +1677,7 @@ function Dashboard({ session }) {
 
                   {/* Integrações */}
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Integrações</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Integrações</div>
                     <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.35, flexShrink: 0 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                       <div>
@@ -1695,7 +1689,7 @@ function Dashboard({ session }) {
 
                   {/* Redes sociais */}
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Redes sociais</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Redes sociais</div>
                     <a
                       href="https://www.instagram.com/luansinezio/"
                       target="_blank"
