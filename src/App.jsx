@@ -1,12 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase.js'
 
-// ─── Hook: bloqueia scroll do body enquanto modal está aberto ────────────────
+// ─── Hook: bloqueia scroll enquanto modal aberto (iOS Safari compatível) ─────
 const useScrollLock = () => {
   useEffect(() => {
-    const prev = document.body.style.overflow
+    const prevBody = document.body.style.overflow
+    const prevHtml = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevBody
+      document.documentElement.style.overflow = prevHtml
+    }
   }, [])
 }
 
@@ -387,39 +392,10 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   const inputStyle = { width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
 
-  const modalCardStyle = isMobile ? {
-    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1001,
-    background: 'var(--modal-bg)',
-    border: '1px solid var(--modal-input-border)',
-    borderRadius: '16px 16px 0 0',
-    padding: '0 20px 20px',
-    maxHeight: '92dvh',
-    overflowY: 'auto',
-    boxShadow: '0 -8px 40px rgba(0,0,0,0.35)',
-    animation: 'slideUp 0.22s ease',
-  } : {
-    background: 'var(--modal-bg)',
-    border: '1px solid var(--modal-input-border)',
-    borderRadius: 'var(--modal-radius)',
-    padding: 28,
-    width: '100%',
-    maxWidth: 460,
-    boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-    animation: 'modalIn 0.18s ease',
-    maxHeight: 'calc(100dvh - 40px)',
-    overflowY: 'auto',
-  }
-
   return (
     <>
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', zIndex: 1000, ...(!isMobile && { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }) }}>
-      <div onClick={e => e.stopPropagation()} style={modalCardStyle}>
-        {/* Drag handle — só mobile */}
-        {isMobile && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 10px' }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--modal-input-border)' }} />
-          </div>
-        )}
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: isMobile ? 20 : 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease', maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer' }}>
@@ -1478,12 +1454,17 @@ function Dashboard({ session }) {
   const [profilePos, setProfilePos] = useState({ top: 0, left: 0 })
   const profileTriggerRef = useRef(null)
 
-  // Scroll lock quando modal de perfil está aberto
+  // Scroll lock quando modal de perfil está aberto (iOS Safari compatível)
   useEffect(() => {
     if (!profileOpen) return
-    const prev = document.body.style.overflow
+    const prevBody = document.body.style.overflow
+    const prevHtml = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevBody
+      document.documentElement.style.overflow = prevHtml
+    }
   }, [profileOpen])
   const [nameEdit, setNameEdit] = useState(displayName)
   const [hoursEdit, setHoursEdit] = useState(session.user.user_metadata?.work_hours || 8)
