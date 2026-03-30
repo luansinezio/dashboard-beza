@@ -1369,6 +1369,13 @@ function Dashboard({ session }) {
     setSavingHours(false)
   }
 
+  const [resetSent, setResetSent] = useState(false)
+  const handlePasswordReset = async () => {
+    await supabase.auth.resetPasswordForEmail(userEmail)
+    setResetSent(true)
+    setTimeout(() => setResetSent(false), 4000)
+  }
+
   const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
   const avatarInputRef = useRef(null)
 
@@ -1584,76 +1591,135 @@ function Dashboard({ session }) {
           </div>
         </div>
 
-        {/* Menu de perfil */}
+        {/* Modal de perfil */}
         {profileOpen && (
-          <>
-            <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1500 }} />
+          <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
             <div onClick={e => e.stopPropagation()} style={{
-              position: 'fixed', top: profilePos.top, left: profilePos.left,
-              zIndex: 2000, width: 280,
-              background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)',
-              borderRadius: 14, padding: '18px 0 8px', boxShadow: '0 12px 40px rgba(0,0,0,0.22)',
-              animation: 'modalIn 0.14s ease',
+              background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
+              borderRadius: 'var(--modal-radius)', width: '100%', maxWidth: 560,
+              boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease',
+              overflow: 'hidden',
             }}>
-
-              {/* Foto */}
-              <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--modal-input-border)' }}>
-                <div style={{
-                  width: 64, height: 64, borderRadius: '50%', overflow: 'hidden',
-                  background: avatarUrl ? 'transparent' : 'var(--accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  {avatarUrl
-                    ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
-                  }
-                </div>
-                <button
-                  onClick={() => avatarInputRef.current?.click()}
-                  style={{ fontSize: 12, padding: '5px 14px', borderRadius: 20, border: '1px solid var(--modal-input-border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 500 }}
-                >
-                  Alterar foto
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 28px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Meu perfil</h3>
+                <button onClick={() => setProfileOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer', display: 'flex' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
-              {/* Apelido */}
-              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Apelido</div>
-                <input
-                  value={nameEdit}
-                  onChange={e => setNameEdit(e.target.value)}
-                  onBlur={handleNamePanelSave}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-                  style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
-                />
-                {savingName && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Salvando…</div>}
-              </div>
+              {/* Corpo: duas colunas */}
+              <div style={{ display: 'flex', gap: 0 }}>
 
-              {/* Horas de trabalho */}
-              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Horas de trabalho por dia</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input
-                    type="number" min="1" max="24"
-                    value={hoursEdit}
-                    onChange={e => setHoursEdit(e.target.value)}
-                    onBlur={handleHoursSave}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-                    style={{ width: 64, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: 'var(--text)', outline: 'none', textAlign: 'center' }}
-                  />
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>horas</span>
-                  {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Salvando…</span>}
+                {/* ── Coluna esquerda ── */}
+                <div style={{ flex: 1, padding: '24px 28px', borderRight: '1px solid var(--modal-input-border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                  {/* Foto */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: avatarUrl ? 'transparent' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {avatarUrl
+                        ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <span style={{ color: '#fff', fontSize: 26, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
+                      }
+                    </div>
+                    <button onClick={() => avatarInputRef.current?.click()} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: '1px solid var(--modal-input-border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 500 }}>
+                      Alterar foto
+                    </button>
+                  </div>
+
+                  {/* Nome */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Meu nome</label>
+                    <input
+                      value={nameEdit}
+                      onChange={e => setNameEdit(e.target.value)}
+                      onBlur={handleNamePanelSave}
+                      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', fontSize: 14, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                    {savingName && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Salvando…</div>}
+                  </div>
+
+                  {/* E-mail */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Meu e-mail</label>
+                    <div style={{ padding: '10px 12px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', fontSize: 14, color: 'var(--text-muted)' }}>
+                      {userEmail}
+                    </div>
+                  </div>
+
+                  {/* Horas de trabalho */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Horas de trabalho por dia</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="number" min="1" max="24"
+                        value={hoursEdit}
+                        onChange={e => setHoursEdit(e.target.value)}
+                        onBlur={handleHoursSave}
+                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                        style={{ width: 70, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', fontSize: 14, color: 'var(--text)', outline: 'none', textAlign: 'center' }}
+                      />
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>horas</span>
+                      {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Salvando…</span>}
+                    </div>
+                  </div>
+
+                  {/* Senha */}
+                  <div>
+                    <button
+                      onClick={handlePasswordReset}
+                      disabled={resetSent}
+                      style={{ fontSize: 13, padding: '9px 16px', borderRadius: 'var(--radius-input)', border: '1px solid var(--modal-input-border)', background: 'transparent', color: resetSent ? 'var(--text-muted)' : 'var(--text)', cursor: resetSent ? 'default' : 'pointer', fontWeight: 500, width: '100%', textAlign: 'left' }}
+                    >
+                      {resetSent ? '✓ Link de redefinição enviado para o e-mail' : 'Redefinir senha'}
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* ── Coluna direita ── */}
+                <div style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                  {/* Integrações */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Integrações</div>
+                    <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.35, flexShrink: 0 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', opacity: 0.5 }}>Em breve</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Conecte suas ferramentas aqui</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Redes sociais */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Redes sociais</div>
+                    <a
+                      href="https://www.instagram.com/luansinezio/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--modal-input-border)', background: 'var(--modal-input-bg)', textDecoration: 'none', color: 'var(--text)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}
+                    >
+                      {/* Instagram icon */}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                      </svg>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>@luansinezio</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>instagram.com/luansinezio</div>
+                      </div>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginLeft: 'auto', opacity: 0.35 }}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+
                 </div>
               </div>
-
-              {/* Integrações (placeholder futuro) */}
-              <div style={{ padding: '10px 18px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Integrações</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Em breve…</div>
-              </div>
-
             </div>
-          </>
+          </div>
         )}
 
         {/* Grupo direito: nova tarefa + logout separados */}
