@@ -442,7 +442,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                         autoFocus
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        onKeyDown={e => {
+                        onKeyDown={async e => {
                           if (e.key === 'Escape') { setDropdownOpen(false); setSearchQuery(''); setCatOptionsId(null) }
                           if (e.key === 'Enter') {
                             if (filteredCats.length === 1) { setCategoryId(filteredCats[0].id); setDropdownOpen(false); setSearchQuery('') }
