@@ -18,9 +18,13 @@ const addDays = (str, n) => {
   d.setDate(d.getDate() + n)
   return toDateStr(d)
 }
-const formatDisplay = (str) => {
+const formatWeekday = (str) => {
   const d = new Date(str + 'T12:00:00')
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  return d.toLocaleDateString('pt-BR', { weekday: 'long' })
+}
+const formatDayMonth = (str) => {
+  const d = new Date(str + 'T12:00:00')
+  return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
 }
 const isToday = (str) => str === today()
 const isPast = (str) => str < today()
@@ -338,6 +342,7 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
 // ─── Componente: Modal de adição/edição de tarefa ──────────────────────────
 const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, onCreateCategory, onEditCategory, onDeleteCategory }) => {
   useScrollLock()
+  const isMobile = window.innerWidth < 640
   const [title, setTitle] = useState(task?.title || '')
   const [categoryId, setCategoryId] = useState(task?.category_id || '')
   const [minutes, setMinutes] = useState(task?.estimated_minutes || 60)
@@ -383,6 +388,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
 
   return (
+    <>
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease', maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -494,8 +500,8 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                             >···</button>
                           </div>
 
-                          {/* Painel — Notion style, fixed à DIREITA */}
-                          {catOptionsId === c.id && (
+                          {/* Painel — Notion style, fixed à DIREITA (só desktop) */}
+                          {catOptionsId === c.id && !isMobile && (
                             <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: catOptPos.top, left: catOptPos.left, zIndex: 2100, width: 256, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 10, padding: '8px 0', boxShadow: '0 12px 40px rgba(0,0,0,0.22)', animation: 'modalIn 0.12s ease' }}>
 
                               {/* Input rename — Enter salva */}
@@ -624,6 +630,75 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
         </div>
       </div>
     </div>
+
+    {/* ── Bottom sheet de opções de categoria (mobile only) ── */}
+    {isMobile && catOptionsId && (() => {
+      const activeCat = categories.find(c => c.id === catOptionsId)
+      return (
+        <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', inset: 0, zIndex: 2200 }}>
+          {/* backdrop */}
+          <div onClick={() => setCatOptionsId(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+          {/* sheet */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--dropdown-bg)', borderRadius: '16px 16px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.35)', animation: 'slideUp 0.22s ease', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
+            {/* drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px' }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--modal-input-border)' }} />
+            </div>
+            {/* rename + save + X */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 12px' }}>
+              <input
+                autoFocus
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e) }}
+                placeholder="Nome da categoria"
+                style={{ flex: 1, background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, outline: 'none' }}
+              />
+              <button onClick={saveEditCat} style={{ padding: '10px 16px', background: 'var(--accent)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Salvar
+              </button>
+              <button onClick={() => setCatOptionsId(null)} style={{ padding: '10px 11px', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            {savingEdit && <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '0 14px 8px' }}>Salvando…</div>}
+            {/* divider */}
+            <div style={{ height: 1, background: 'var(--modal-input-border)' }} />
+            {/* excluir */}
+            <div
+              onClick={e => activeCat && deleteCat(e, catOptionsId)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', cursor: 'pointer', color: 'var(--text)', fontSize: 14 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.65 }}>
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+              Excluir categoria
+            </div>
+            {/* divider */}
+            <div style={{ height: 1, background: 'var(--modal-input-border)' }} />
+            {/* cores */}
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, padding: '10px 14px 6px', letterSpacing: 0.3 }}>Cores</div>
+            {LABEL_COLORS_NAMED.map(({ fg: cFg, bg: cBg, name: colorName }) => (
+              <div
+                key={cFg}
+                onClick={() => { setEditColor(cFg); onEditCategory?.(catOptionsId, { name: editName.trim() || activeCat?.name || '', color: cFg }) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer' }}
+              >
+                <span style={{ width: 22, height: 22, borderRadius: 5, background: cBg, border: `2px solid ${cFg}55`, flexShrink: 0 }} />
+                <span style={{ fontSize: 14, color: 'var(--text)', flex: 1 }}>{colorName}</span>
+                {editColor === cFg && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </div>
+            ))}
+            <div style={{ height: 16 }} />
+          </div>
+        </div>
+      )
+    })()}
+    </>
   )
 }
 
@@ -1877,19 +1952,29 @@ function Dashboard({ session }) {
             <Icon name="chevLeft" size={18} />
           </button>
 
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize' }}>
-                {formatDisplay(selectedDate)}
-              </div>
-              {isViewingToday && <span style={{ fontSize: 11, background: '#3b82f622', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #3b82f644', whiteSpace: 'nowrap' }}>Hoje</span>}
-              {isViewingPast && !isViewingToday && <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '2px 10px', borderRadius: 999, border: '1px solid #ef444433', whiteSpace: 'nowrap' }}>Passado</span>}
-              {!isViewingToday && !isViewingPast && <span style={{ fontSize: 11, background: '#4caf5011', color: '#4caf50', padding: '2px 10px', borderRadius: 999, border: '1px solid #4caf5033', whiteSpace: 'nowrap' }}>Futuro</span>}
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            {/* Pill: Hoje / Passado / Futuro */}
+            {isViewingToday && (
+              <span style={{ fontSize: 11, background: '#3b82f622', color: 'var(--accent)', padding: '2px 10px', borderRadius: 999, border: '1px solid #3b82f644', whiteSpace: 'nowrap' }}>Hoje</span>
+            )}
+            {isViewingPast && !isViewingToday && (
+              <span style={{ fontSize: 11, background: '#ef444411', color: '#ef4444', padding: '2px 10px', borderRadius: 999, border: '1px solid #ef444433', whiteSpace: 'nowrap' }}>Passado</span>
+            )}
+            {!isViewingToday && !isViewingPast && (
+              <span style={{ fontSize: 11, background: '#4caf5011', color: '#4caf50', padding: '2px 10px', borderRadius: 999, border: '1px solid #4caf5033', whiteSpace: 'nowrap' }}>Futuro</span>
+            )}
+            {/* Dia da semana grande */}
+            <div style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize', lineHeight: 1.2, marginTop: 2 }}>
+              {formatWeekday(selectedDate)}
+            </div>
+            {/* Data menor */}
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+              {formatDayMonth(selectedDate)}
             </div>
             {!isViewingToday && (
               <button
                 onClick={() => setSelectedDate(today())}
-                style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, textDecoration: 'underline', marginTop: 4 }}
+                style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, textDecoration: 'underline', marginTop: 2, cursor: 'pointer' }}
               >
                 Ir para hoje
               </button>
