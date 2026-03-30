@@ -988,20 +988,20 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
         </div>
 
         {/* Custom date */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <div style={{ flex: 1, position: 'relative' }} onClick={() => { try { dateInputRef.current?.showPicker() } catch(e) { dateInputRef.current?.focus() } }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+          <div onClick={() => { try { dateInputRef.current?.showPicker() } catch(e) { dateInputRef.current?.focus() } }}>
             <input
               ref={dateInputRef}
               type="date"
               value={customDate}
               min={addDays(today(), 1)}
               onChange={e => setCustomDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '10px 14px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
             />
           </div>
           <button onClick={() => { if (customDate) { onMove(task.id, customDate); onClose() } }} disabled={!customDate}
             style={{
-              padding: '10px 20px', borderRadius: 12,
+              width: '100%', padding: '11px', borderRadius: 12,
               background: customDate ? 'var(--accent)' : 'var(--modal-input-bg)',
               border: customDate ? '1px solid rgba(255,255,255,0.18)' : '1px solid var(--modal-input-border)',
               color: customDate ? '#fff' : 'var(--text-muted)',
@@ -1146,6 +1146,16 @@ function Dashboard({ session }) {
 
   const handleCreateCategory = (newCat) => {
     setCategories(prev => [...prev, newCat].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  const handleDeleteCategory = async (catId) => {
+    // Optimistic UI update
+    setCategories(prev => prev.filter(c => c.id !== catId))
+    setTasks(prev => prev.map(t => t.category_id === catId ? { ...t, category_id: null } : t))
+    if (filterCategory === catId) setFilterCategory('all')
+    // Persist: desvincula tarefas e remove categoria
+    await supabase.from('tasks').update({ category_id: null }).eq('category_id', catId).eq('user_id', userId)
+    await supabase.from('categories').delete().eq('id', catId)
   }
 
   const [displayName, setDisplayName] = useState(
@@ -1513,27 +1523,47 @@ function Dashboard({ session }) {
                   const isActive = filterCategory === c.id
                   const count = tasks.filter(t => t.category_id === c.id).length
                   return (
-                    <button
+                    <div
                       key={c.id}
-                      onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
                       className={isActive ? 'glass' : ''}
                       style={{
-                        padding: '6px 14px', borderRadius: 999, fontSize: 12, flexShrink: 0,
+                        display: 'flex', alignItems: 'center',
+                        borderRadius: 999, fontSize: 12, flexShrink: 0,
                         background: isActive ? 'rgba(255,255,255,0.18)' : 'var(--surface)',
                         border: `1px solid ${isActive ? (c.color + '55') : 'var(--border)'}`,
-                        color: isActive ? 'var(--text)' : 'var(--text-muted)',
-                        fontWeight: isActive ? 600 : 500,
-                        cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
+                        overflow: 'hidden',
                       }}
                     >
-                      <span style={{
-                        width: 7, height: 7, borderRadius: '50%',
-                        background: c.color || '#666', flexShrink: 0,
-                        opacity: isActive ? 1 : 0.6,
-                      }} />
-                      {c.name} ({count})
-                    </button>
+                      <div
+                        onClick={() => setFilterCategory(isActive ? 'all' : c.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 8px 6px 12px',
+                          color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                          fontWeight: isActive ? 600 : 500,
+                          cursor: 'pointer', userSelect: 'none',
+                        }}
+                      >
+                        <span style={{
+                          width: 7, height: 7, borderRadius: '50%',
+                          background: c.color || '#666', flexShrink: 0,
+                          opacity: isActive ? 1 : 0.6,
+                        }} />
+                        {c.name} ({count})
+                      </div>
+                      <div
+                        onClick={() => handleDeleteCategory(c.id)}
+                        title="Remover label"
+                        style={{
+                          padding: '6px 10px 6px 4px',
+                          cursor: 'pointer', color: 'var(--text-muted)',
+                          fontSize: 13, lineHeight: 1, opacity: 0.45,
+                          transition: 'opacity 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#ef4444' }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.45'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                      >×</div>
+                    </div>
                   )
                 })}
             </>
