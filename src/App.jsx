@@ -359,7 +359,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
     setSavingEdit(true)
     await onEditCategory?.(catOptionsId, { name: editName.trim(), color: editColor })
     setSavingEdit(false)
-    setCatOptionsId(null)
+    // Painel fica aberto após rename (igual Notion)
   }
   const deleteCat = (e, catId) => {
     e.stopPropagation()
@@ -482,43 +482,55 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                             {/* Botão ··· — sem borda, hover mais escuro */}
                             <button
                               className="dots-btn"
-                              onClick={e => { e.stopPropagation(); if (catOptionsId === c.id) { setCatOptionsId(null) } else { const r = e.currentTarget.getBoundingClientRect(); const fitsR = r.right + 12 + 260 < window.innerWidth - 8; setCatOptPos(fitsR ? { top: r.top, left: r.right + 8 } : { top: r.bottom + 4, left: Math.max(8, r.left - 260) }); setCatOptionsId(c.id); setEditName(c.name); setEditColor(c.color || LABEL_COLORS_NAMED[6].fg) } }}
+                              onClick={e => { e.stopPropagation(); if (catOptionsId === c.id) { setCatOptionsId(null) } else { const r = e.currentTarget.getBoundingClientRect(); const panelW = 256; const fitsR = r.right + 10 + panelW < window.innerWidth - 8; const left = fitsR ? r.right + 8 : Math.max(8, dropPos.left - panelW - 8); const top = Math.min(r.top, window.innerHeight - 440); setCatOptPos({ top, left }); setCatOptionsId(c.id); setEditName(c.name); setEditColor(c.color || LABEL_COLORS_NAMED[6].fg) } }}
                               onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover-deep)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                               style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px 9px', borderRadius: 6, opacity: catOptionsId === c.id ? 1 : 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 15, letterSpacing: 2, lineHeight: 1 }}
                             >···</button>
                           </div>
 
-                          {/* Painel de opções — position: fixed à DIREITA do ··· */}
+                          {/* Painel — Notion style, fixed à DIREITA */}
                           {catOptionsId === c.id && (
-                            <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: catOptPos.top, left: catOptPos.left, zIndex: 2100, width: 256, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, padding: '14px', boxShadow: '0 12px 40px rgba(0,0,0,0.28)', animation: 'modalIn 0.12s ease' }}>
-                              {/* Rename */}
-                              <input
-                                autoFocus
-                                value={editName}
-                                onChange={e => setEditName(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e); if (e.key === 'Escape') setCatOptionsId(null) }}
-                                style={{ width: '100%', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }}
-                              />
-                              <button
-                                onClick={saveEditCat}
-                                disabled={!editName.trim() || savingEdit}
-                                style={{ width: '100%', padding: '7px', background: editName.trim() ? 'var(--accent)' : 'transparent', border: 'none', borderRadius: 7, color: editName.trim() ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 700, cursor: editName.trim() ? 'pointer' : 'default', marginBottom: 8 }}
-                              >{savingEdit ? '…' : 'Salvar nome'}</button>
-                              {/* Excluir */}
-                              <button onClick={e => deleteCat(e, c.id)} style={{ width: '100%', padding: '7px 10px', background: 'none', border: '1px solid #ef444430', borderRadius: 7, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 10 }}>
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: catOptPos.top, left: catOptPos.left, zIndex: 2100, width: 256, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 10, padding: '8px 0', boxShadow: '0 12px 40px rgba(0,0,0,0.22)', animation: 'modalIn 0.12s ease' }}>
+
+                              {/* Input rename — Enter salva */}
+                              <div style={{ padding: '6px 10px 4px' }}>
+                                <input
+                                  autoFocus
+                                  value={editName}
+                                  onChange={e => setEditName(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e); if (e.key === 'Escape') setCatOptionsId(null) }}
+                                  style={{ width: '100%', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 7, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                                />
+                                {savingEdit && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, paddingLeft: 2 }}>Salvando…</div>}
+                              </div>
+
+                              {/* Divisor */}
+                              <div style={{ height: 1, background: 'var(--modal-input-border)', margin: '6px 0' }} />
+
+                              {/* Excluir — linha de menu */}
+                              <div
+                                onClick={e => deleteCat(e, c.id)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px', cursor: 'pointer', color: 'var(--text)', fontSize: 13 }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.65 }}>
                                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
                                 </svg>
                                 Excluir
-                              </button>
-                              {/* Paleta Notion com bg pastel */}
-                              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Cores</div>
+                              </div>
+
+                              {/* Divisor */}
+                              <div style={{ height: 1, background: 'var(--modal-input-border)', margin: '6px 0' }} />
+
+                              {/* Cores */}
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, padding: '2px 14px 4px', letterSpacing: 0.3 }}>Cores</div>
                               {LABEL_COLORS_NAMED.map(({ fg: cFg, bg: cBg, name: colorName }) => (
                                 <div
                                   key={cFg}
                                   onClick={() => { setEditColor(cFg); onEditCategory?.(c.id, { name: editName.trim() || c.name, color: cFg }) }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 6px', borderRadius: 7, cursor: 'pointer' }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 14px', cursor: 'pointer' }}
                                   onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
                                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                 >
