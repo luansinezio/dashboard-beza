@@ -1689,7 +1689,7 @@ function Dashboard({ session }) {
 
                   {/* Redes sociais */}
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Redes sociais</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4 }}>Acompanhe quem desenvolveu esse projeto</div>
                     <a
                       href="https://www.instagram.com/luansinezio/"
                       target="_blank"
