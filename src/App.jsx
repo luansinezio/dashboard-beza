@@ -1300,10 +1300,18 @@ function Dashboard({ session }) {
         e.preventDefault()
         executeUndo()
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === shortcutKey && !e.shiftKey && !e.altKey) {
+        const tag = document.activeElement?.tagName
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+          e.preventDefault()
+          setEditingTask(null)
+          setShowModal(true)
+        }
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [executeUndo])
+  }, [executeUndo, shortcutKey])
 
   // ─── Delete confirm ────────────────────────────────────────────────────────
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
@@ -1369,12 +1377,25 @@ function Dashboard({ session }) {
     setSavingHours(false)
   }
 
-  const [resetSent, setResetSent] = useState(false)
-  const handlePasswordReset = async () => {
-    await supabase.auth.resetPasswordForEmail(userEmail)
-    setResetSent(true)
-    setTimeout(() => setResetSent(false), 4000)
-  }
+  // ─── Personalizações ───────────────────────────────────────────────────────
+  const [theme, setTheme] = useState(() => localStorage.getItem('beza_theme') || 'system')
+  const [timezone, setTimezone] = useState(() => localStorage.getItem('beza_tz') || Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [shortcutKey, setShortcutKey] = useState(() => localStorage.getItem('beza_shortcut') || 't')
+  const [listeningShortcut, setListeningShortcut] = useState(false)
+
+  useEffect(() => {
+    if (theme === 'system') document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('beza_theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem('beza_tz', timezone)
+  }, [timezone])
+
+  useEffect(() => {
+    localStorage.setItem('beza_shortcut', shortcutKey)
+  }, [shortcutKey])
 
   const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
   const avatarInputRef = useRef(null)
@@ -1596,7 +1617,7 @@ function Dashboard({ session }) {
           <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
             <div onClick={e => e.stopPropagation()} style={{
               background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
-              borderRadius: 'var(--modal-radius)', width: '100%', maxWidth: 560,
+              borderRadius: 'var(--modal-radius)', width: '100%', maxWidth: 820,
               boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease',
               overflow: 'hidden',
             }}>
@@ -1608,18 +1629,19 @@ function Dashboard({ session }) {
                 </button>
               </div>
 
-              {/* Corpo: duas colunas */}
-              <div style={{ display: 'flex', gap: 0 }}>
+              {/* Corpo: 3 colunas desktop / linear mobile */}
+              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
 
-                {/* ── Coluna esquerda ── */}
-                <div style={{ flex: 1, padding: '24px 28px', borderRight: '1px solid var(--modal-input-border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* ── Coluna 1: Perfil ── */}
+                <div style={{ flex: '1 1 220px', padding: '24px 24px', borderRight: '1px solid var(--modal-input-border)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 2 }}>Perfil</div>
 
                   {/* Foto */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: avatarUrl ? 'transparent' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', background: avatarUrl ? 'transparent' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {avatarUrl
                         ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        : <span style={{ color: '#fff', fontSize: 26, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
+                        : <span style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
                       }
                     </div>
                     <button onClick={() => avatarInputRef.current?.click()} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: '1px solid var(--modal-input-border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 500 }}>
@@ -1629,88 +1651,172 @@ function Dashboard({ session }) {
 
                   {/* Nome */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Meu nome</label>
-                    <input
-                      value={nameEdit}
-                      onChange={e => setNameEdit(e.target.value)}
-                      onBlur={handleNamePanelSave}
-                      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                      style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', fontSize: 14, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                    {savingName && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Salvando…</div>}
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>Meu nome</label>
+                    <input value={nameEdit} onChange={e => setNameEdit(e.target.value)} onBlur={handleNamePanelSave} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '9px 11px', fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }} />
+                    {savingName && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>Salvando…</div>}
                   </div>
 
                   {/* E-mail */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Meu e-mail</label>
-                    <div style={{ padding: '10px 12px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', fontSize: 14, color: 'var(--text-muted)' }}>
-                      {userEmail}
-                    </div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 5, display: 'block' }}>Meu e-mail</label>
+                    <div style={{ padding: '9px 11px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', fontSize: 13, color: 'var(--text-muted)' }}>{userEmail}</div>
                   </div>
 
-                  {/* Horas de trabalho — slider estilo onboarding */}
+                  {/* Horas */}
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, display: 'block' }}>Horas de trabalho por dia</label>
-                    <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                      <span style={{ fontSize: 42, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{hoursEdit}</span>
-                      <span style={{ fontSize: 14, color: 'var(--text-muted)', marginLeft: 6 }}>horas</span>
-                      {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>Salvando…</span>}
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block' }}>Horas de trabalho por dia</label>
+                    <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                      <span style={{ fontSize: 38, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{hoursEdit}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 5 }}>horas</span>
+                      {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>Salvando…</span>}
                     </div>
-                    <input
-                      type="range" min={1} max={16} step={1}
-                      value={hoursEdit}
-                      onChange={e => setHoursEdit(Number(e.target.value))}
-                      onMouseUp={handleHoursSave}
-                      onTouchEnd={handleHoursSave}
-                      style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer', height: 4 }}
-                    />
+                    <input type="range" min={1} max={16} step={1} value={hoursEdit} onChange={e => setHoursEdit(Number(e.target.value))} onMouseUp={handleHoursSave} onTouchEnd={handleHoursSave}
+                      style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer', height: 4 }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>1h</span>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>16h</span>
                     </div>
                   </div>
-
                 </div>
 
-                {/* ── Coluna direita ── */}
-                <div style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {/* ── Coluna 2: Personalizações ── */}
+                <div style={{ flex: '1 1 220px', padding: '24px 24px', borderRight: '1px solid var(--modal-input-border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 2 }}>Personalizações</div>
 
-                  {/* Integrações */}
+                  {/* Aparência */}
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>Integrações</div>
-                    <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.35, flexShrink: 0 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', opacity: 0.5 }}>Em breve</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Conecte suas ferramentas aqui</div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block' }}>Aparência</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {[
+                        { key: 'system', label: 'Sistema', icon: '💻' },
+                        { key: 'light',  label: 'Claro',   icon: '☀️' },
+                        { key: 'dark',   label: 'Escuro',  icon: '🌙' },
+                      ].map(opt => (
+                        <button key={opt.key} onClick={() => setTheme(opt.key)} style={{
+                          flex: 1, padding: '7px 4px', borderRadius: 10, border: `1.5px solid ${theme === opt.key ? 'var(--accent)' : 'var(--modal-input-border)'}`,
+                          background: theme === opt.key ? 'var(--accent)' + '22' : 'var(--modal-input-bg)',
+                          color: theme === opt.key ? 'var(--accent)' : 'var(--text-muted)',
+                          fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                        }}>
+                          <span style={{ fontSize: 15 }}>{opt.icon}</span>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Fuso horário */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Fuso horário</label>
+                    <select value={timezone} onChange={e => setTimezone(e.target.value)}
+                      style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '9px 11px', fontSize: 13, color: 'var(--text)', outline: 'none', cursor: 'pointer' }}>
+                      <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
+                      <option value="America/Manaus">Manaus (GMT-4)</option>
+                      <option value="America/Belem">Belém (GMT-3)</option>
+                      <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
+                      <option value="America/Recife">Recife (GMT-3)</option>
+                      <option value="America/Bahia">Salvador (GMT-3)</option>
+                      <option value="America/Porto_Velho">Porto Velho (GMT-4)</option>
+                      <option value="America/Boa_Vista">Boa Vista (GMT-4)</option>
+                      <option value="America/Rio_Branco">Rio Branco (GMT-5)</option>
+                      <option value="America/Noronha">Fernando de Noronha (GMT-2)</option>
+                      <option value="UTC">UTC (GMT+0)</option>
+                    </select>
+                  </div>
+
+                  {/* Atalho de teclado */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Atalho — nova tarefa</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <kbd style={{ padding: '4px 8px', borderRadius: 6, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', fontSize: 12, fontFamily: 'monospace', color: 'var(--text)' }}>
+                          {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}
+                        </kbd>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>+</span>
+                        {listeningShortcut ? (
+                          <div
+                            autoFocus
+                            tabIndex={0}
+                            onKeyDown={e => {
+                              e.preventDefault()
+                              if (e.key.length === 1 && e.key !== ' ') {
+                                setShortcutKey(e.key.toLowerCase())
+                                setListeningShortcut(false)
+                              }
+                              if (e.key === 'Escape') setListeningShortcut(false)
+                            }}
+                            onBlur={() => setListeningShortcut(false)}
+                            style={{ padding: '4px 10px', borderRadius: 6, background: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 12, fontFamily: 'monospace', color: '#fff', cursor: 'pointer', outline: 'none', minWidth: 32, textAlign: 'center' }}
+                          >
+                            …
+                          </div>
+                        ) : (
+                          <kbd
+                            onClick={() => setListeningShortcut(true)}
+                            title="Clique para alterar"
+                            style={{ padding: '4px 10px', borderRadius: 6, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', fontSize: 12, fontFamily: 'monospace', color: 'var(--text)', cursor: 'pointer' }}>
+                            {shortcutKey.toUpperCase()}
+                          </kbd>
+                        )}
                       </div>
+                      {listeningShortcut && <span style={{ fontSize: 11, color: 'var(--accent)' }}>Pressione uma tecla…</span>}
+                    </div>
+                  </div>
+
+                  {/* Idioma — estático */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Idioma</label>
+                    <div style={{ padding: '9px 11px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', fontSize: 13, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      Português (BR)
+                      <span style={{ fontSize: 10, opacity: 0.5 }}>Em breve mais opções</span>
+                    </div>
+                  </div>
+
+                  {/* Notificações — placeholder */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Notificações</label>
+                    <div style={{ padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.4, flexShrink: 0 }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', opacity: 0.5 }}>Em breve</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Alertas de sobrecarga e planejamento</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Coluna 3: Integrações ── */}
+                <div style={{ flex: '1 1 180px', padding: '24px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 2 }}>Integrações</div>
+
+                  <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ opacity: 0.35, flexShrink: 0 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', opacity: 0.5 }}>Em breve</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Conecte suas ferramentas aqui</div>
                     </div>
                   </div>
 
                   {/* Redes sociais */}
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4 }}>Acompanhe quem desenvolveu esse projeto</div>
-                    <a
-                      href="https://www.instagram.com/luansinezio/"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  <div style={{ marginTop: 'auto' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Feito por</div>
+                    <a href="https://www.instagram.com/luansinezio/" target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--modal-input-border)', background: 'var(--modal-input-bg)', textDecoration: 'none', color: 'var(--text)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}
-                    >
-                      {/* Instagram icon */}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                       </svg>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>@luansinezio</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>instagram.com/luansinezio</div>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>@luansinezio</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>instagram.com/luansinezio</div>
                       </div>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginLeft: 'auto', opacity: 0.35 }}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginLeft: 'auto', opacity: 0.35 }}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </a>
                   </div>
-
                 </div>
+
               </div>
             </div>
           </div>
