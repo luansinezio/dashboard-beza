@@ -377,7 +377,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   }
 
   const filteredCats = categories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  const presets = [30, 60, 120, 180]
+  const presets = [30, 60, 90, 120]
 
   const inputStyle = { width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--radius-input)', padding: '10px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
@@ -570,33 +570,23 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
           <div>
             <label style={labelStyle}>Estimativa de tempo</label>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              {presets.map(p => {
-                const { bg: dBg, fg: dFg } = getDurationColor(p)
-                const sel = minutes === p
-                return (
-                  <button key={p} onClick={() => setMinutes(p)} style={{
-                    flex: 1, padding: '8px 4px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                    background: sel ? dBg : dBg + '66',
-                    border: `1.5px solid ${sel ? dFg + '99' : dFg + '33'}`,
-                    color: sel ? dFg : dFg + 'aa',
-                    boxShadow: sel ? `0 0 0 3px ${dBg}` : 'none',
-                    transition: 'all 0.15s',
-                  }}>
-                    {p < 60 ? `${p}min` : `${p / 60}h`}
-                  </button>
-                )
-              })}
+              {presets.map(p => (
+                <button key={p} onClick={() => setMinutes(p)} style={{
+                  flex: 1, padding: '8px 4px', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  background: minutes === p ? 'var(--accent)' : 'var(--modal-input-bg)',
+                  border: `1px solid ${minutes === p ? 'var(--accent)' : 'var(--modal-input-border)'}`,
+                  color: minutes === p ? '#fff' : 'var(--text-muted)',
+                  boxShadow: minutes === p ? 'var(--btn-glass-shadow)' : 'none',
+                }}>
+                  {p < 60 ? `${p}min` : `${p / 60}h`}
+                </button>
+              ))}
             </div>
-            {(() => {
-              const { bg: dBg, fg: dFg } = getDurationColor(minutes)
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="number" value={minutes} onChange={e => setMinutes(Math.max(5, Number(e.target.value)))} min={5} step={5}
-                    style={{ width: 90, background: dBg + '66', border: `1.5px solid ${dFg}55`, borderRadius: 12, padding: '8px 12px', color: dFg, fontSize: 14, fontWeight: 600, outline: 'none' }} />
-                  <span style={{ fontSize: 13, color: dFg + 'cc', fontWeight: 500 }}>minutos</span>
-                </div>
-              )
-            })()}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="number" value={minutes} onChange={e => setMinutes(Math.max(5, Number(e.target.value)))} min={5} step={5}
+                style={{ width: 90, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, padding: '8px 12px', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>minutos</span>
+            </div>
           </div>
 
           <div>
@@ -677,15 +667,10 @@ const TaskItem = ({ task, categories, onToggle, onDelete, onEdit, overloaded, on
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
             <CategoryBadge category={category} />
-            {(() => {
-              const { bg: tBg, fg: tFg } = getDurationColor(task.estimated_minutes)
-              return (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 6, background: isOverloaded ? '#fee2e2' : tBg, color: isOverloaded ? '#dc2626' : tFg }}>
-                  <Icon name="clock" size={11} color={isOverloaded ? '#dc2626' : tFg} />
-                  {timeStr}
-                </span>
-              )
-            })()}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: isOverloaded ? '#ef444499' : 'var(--text-muted)' }}>
+              <Icon name="clock" size={12} color={isOverloaded ? '#ef444499' : 'var(--text-muted)'} />
+              {timeStr}
+            </span>
             {task.notes && (
               <button
                 onClick={() => setExpanded(e => !e)}
@@ -972,14 +957,6 @@ const LABEL_COLORS_NAMED = [
   { name: 'Rosa',     fg: '#c14f8c', bg: '#f5e0e9' },
   { name: 'Vermelho', fg: '#d44c47', bg: '#ffe2dd' },
 ]
-
-// Cor por duração: azul → amarelo → laranja → vermelho
-const getDurationColor = (minutes) => {
-  if (minutes < 60)  return { bg: '#dbeafe', fg: '#2563eb' }   // azul claro
-  if (minutes < 120) return { bg: '#fef9c3', fg: '#b45309' }   // amarelo âmbar
-  if (minutes < 180) return { bg: '#ffedd5', fg: '#c2410c' }   // laranja
-  return                    { bg: '#fee2e2', fg: '#dc2626' }    // vermelho
-}
 
 // Dado o `color` armazenado (fg), retorna { bg, fg } para renderização correta
 const getCatStyle = (color) => {
