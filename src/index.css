@@ -34,6 +34,11 @@
   --modal-overlay: rgba(0, 0, 0, 0.45);
   --modal-radius: 16px;
   --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.22) inset, 0 4px 14px rgba(59,130,246,0.35);
+
+  /* Dropdown tokens (100% opaco) */
+  --dropdown-bg: #17171c;
+  --dropdown-hover: rgba(255, 255, 255, 0.07);
+  --dropdown-hover-deep: rgba(255, 255, 255, 0.13);
 }
 
 /* ─── LIGHT MODE ─────────────────────────────────────────────────────────── */
@@ -62,6 +67,11 @@
     --modal-overlay: rgba(0, 0, 0, 0.35);
     --modal-radius: 16px;
     --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.4) inset, 0 4px 14px rgba(59,130,246,0.25);
+
+    /* Dropdown tokens - light */
+    --dropdown-bg: #ffffff;
+    --dropdown-hover: rgba(0, 0, 0, 0.04);
+    --dropdown-hover-deep: rgba(0, 0, 0, 0.09);
   }
 }
 
