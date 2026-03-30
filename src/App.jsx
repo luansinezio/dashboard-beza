@@ -1267,7 +1267,7 @@ function Dashboard({ session }) {
   const userId = session.user.id
   const userEmail = session.user.email
 
-  const [workMinutes] = useState((session.user.user_metadata?.work_hours || 8) * 60)
+  const [workMinutes, setWorkMinutes] = useState((session.user.user_metadata?.work_hours || 8) * 60)
 
   // ─── Undo system ───────────────────────────────────────────────────────────
   const [undoToast, setUndoToast] = useState(null)
@@ -1341,20 +1341,35 @@ function Dashboard({ session }) {
   const [displayName, setDisplayName] = useState(
     session.user.user_metadata?.full_name || userEmail?.split('@')[0] || 'Usuário'
   )
-  const [editingName, setEditingName] = useState(false)
-  const [nameInput, setNameInput] = useState(displayName)
-  const nameInputRef = useRef(null)
+  // ─── Profile menu ──────────────────────────────────────────────────────────
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profilePos, setProfilePos] = useState({ top: 0, left: 0 })
+  const profileTriggerRef = useRef(null)
+  const [nameEdit, setNameEdit] = useState(displayName)
+  const [hoursEdit, setHoursEdit] = useState(session.user.user_metadata?.work_hours || 8)
+  const [savingName, setSavingName] = useState(false)
+  const [savingHours, setSavingHours] = useState(false)
 
-  const handleNameSave = async () => {
-    const trimmed = nameInput.trim()
-    if (!trimmed) { setNameInput(displayName); setEditingName(false); return }
+  const handleNamePanelSave = async () => {
+    const trimmed = nameEdit.trim()
+    if (!trimmed || trimmed === displayName) return
+    setSavingName(true)
     await supabase.auth.updateUser({ data: { full_name: trimmed } })
     setDisplayName(trimmed)
-    setEditingName(false)
+    setSavingName(false)
+  }
+
+  const handleHoursSave = async () => {
+    const h = Math.max(1, Math.min(24, Number(hoursEdit) || 8))
+    setHoursEdit(h)
+    if (h * 60 === workMinutes) return
+    setSavingHours(true)
+    await supabase.auth.updateUser({ data: { work_hours: h } })
+    setWorkMinutes(h * 60)
+    setSavingHours(false)
   }
 
   const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
-  const [avatarHover, setAvatarHover] = useState(false)
   const avatarInputRef = useRef(null)
 
   const handleAvatarUpload = async (e) => {
@@ -1534,57 +1549,112 @@ function Dashboard({ session }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'transparent',
       }}>
-        {/* Grupo esquerdo: avatar + título + nome */}
-        <div className="glass" style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: 'var(--surface)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: 50, padding: '7px 16px 7px 7px',
-        }}>
-          <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
-          <div
-            onClick={() => avatarInputRef.current?.click()}
-            onMouseEnter={() => setAvatarHover(true)}
-            onMouseLeave={() => setAvatarHover(false)}
-            title="Alterar foto"
-            style={{
-              width: 34, height: 34, borderRadius: '50%', overflow: 'hidden',
-              cursor: 'pointer', flexShrink: 0, position: 'relative',
-              background: avatarUrl ? 'transparent' : 'var(--accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
+        {/* Grupo esquerdo: pill clicável → abre menu de perfil */}
+        <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+        <div
+          ref={profileTriggerRef}
+          className="glass"
+          onClick={() => {
+            if (!profileOpen) {
+              const rect = profileTriggerRef.current?.getBoundingClientRect()
+              if (rect) setProfilePos({ top: rect.bottom + 6, left: rect.left })
+            }
+            setProfileOpen(o => !o)
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'var(--surface)', border: '1px solid var(--glass-border)',
+            borderRadius: 50, padding: '7px 16px 7px 7px',
+            cursor: 'pointer', userSelect: 'none',
+          }}
+        >
+          <div style={{
+            width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+            background: avatarUrl ? 'transparent' : 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
             {avatarUrl
               ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, userSelect: 'none' }}>{userName.charAt(0).toUpperCase()}</span>
+              : <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
             }
-            {avatarHover && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>📷</div>
-            )}
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2 }}>Dashboard</div>
-            {editingName ? (
-              <input
-                ref={nameInputRef}
-                value={nameInput}
-                onChange={e => setNameInput(e.target.value)}
-                onBlur={handleNameSave}
-                onKeyDown={e => { if (e.key === 'Enter') handleNameSave(); if (e.key === 'Escape') { setNameInput(displayName); setEditingName(false) } }}
-                autoFocus
-                style={{ fontSize: 11, color: 'var(--text)', background: 'transparent', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', width: 120, padding: '1px 0' }}
-              />
-            ) : (
-              <div onClick={() => { setNameInput(displayName); setEditingName(true) }} title="Editar nome"
-                style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, lineHeight: 1.3 }}>
-                {displayName}
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.45 }}>
-                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-              </div>
-            )}
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.3 }}>{displayName}</div>
           </div>
         </div>
+
+        {/* Menu de perfil */}
+        {profileOpen && (
+          <>
+            <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1500 }} />
+            <div onClick={e => e.stopPropagation()} style={{
+              position: 'fixed', top: profilePos.top, left: profilePos.left,
+              zIndex: 2000, width: 280,
+              background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)',
+              borderRadius: 14, padding: '18px 0 8px', boxShadow: '0 12px 40px rgba(0,0,0,0.22)',
+              animation: 'modalIn 0.14s ease',
+            }}>
+
+              {/* Foto */}
+              <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--modal-input-border)' }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: '50%', overflow: 'hidden',
+                  background: avatarUrl ? 'transparent' : 'var(--accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>{displayName.charAt(0).toUpperCase()}</span>
+                  }
+                </div>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  style={{ fontSize: 12, padding: '5px 14px', borderRadius: 20, border: '1px solid var(--modal-input-border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 500 }}
+                >
+                  Alterar foto
+                </button>
+              </div>
+
+              {/* Apelido */}
+              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Apelido</div>
+                <input
+                  value={nameEdit}
+                  onChange={e => setNameEdit(e.target.value)}
+                  onBlur={handleNamePanelSave}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
+                  style={{ width: '100%', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
+                />
+                {savingName && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Salvando…</div>}
+              </div>
+
+              {/* Horas de trabalho */}
+              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Horas de trabalho por dia</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="number" min="1" max="24"
+                    value={hoursEdit}
+                    onChange={e => setHoursEdit(e.target.value)}
+                    onBlur={handleHoursSave}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
+                    style={{ width: 64, background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: 'var(--text)', outline: 'none', textAlign: 'center' }}
+                  />
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>horas</span>
+                  {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Salvando…</span>}
+                </div>
+              </div>
+
+              {/* Integrações (placeholder futuro) */}
+              <div style={{ padding: '10px 18px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Integrações</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Em breve…</div>
+              </div>
+
+            </div>
+          </>
+        )}
 
         {/* Grupo direito: nova tarefa + logout separados */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
