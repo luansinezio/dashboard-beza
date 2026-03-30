@@ -1373,6 +1373,14 @@ function Dashboard({ session }) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [profilePos, setProfilePos] = useState({ top: 0, left: 0 })
   const profileTriggerRef = useRef(null)
+
+  // Scroll lock quando modal de perfil está aberto
+  useEffect(() => {
+    if (!profileOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [profileOpen])
   const [nameEdit, setNameEdit] = useState(displayName)
   const [hoursEdit, setHoursEdit] = useState(session.user.user_metadata?.work_hours || 8)
   const [savingName, setSavingName] = useState(false)
@@ -1620,7 +1628,7 @@ function Dashboard({ session }) {
               background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)',
               borderRadius: 'var(--modal-radius)', width: '100%', maxWidth: 820,
               boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease',
-              overflow: 'hidden',
+              maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto',
             }}>
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 28px 18px', borderBottom: '1px solid var(--modal-input-border)' }}>
@@ -1726,8 +1734,8 @@ function Dashboard({ session }) {
                     </select>
                   </div>
 
-                  {/* Atalho de teclado */}
-                  <div>
+                  {/* Atalho de teclado — só desktop */}
+                  <div className="profile-shortcut">
                     <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Atalho — nova tarefa</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
