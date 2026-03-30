@@ -1294,6 +1294,26 @@ function Dashboard({ session }) {
     }
   }, [])
 
+  // ─── Personalizações ───────────────────────────────────────────────────────
+  const [theme, setTheme] = useState(() => localStorage.getItem('beza_theme') || 'system')
+  const [timezone, setTimezone] = useState(() => localStorage.getItem('beza_tz') || Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [shortcutKey, setShortcutKey] = useState(() => localStorage.getItem('beza_shortcut') || 't')
+  const [listeningShortcut, setListeningShortcut] = useState(false)
+
+  useEffect(() => {
+    if (theme === 'system') document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('beza_theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem('beza_tz', timezone)
+  }, [timezone])
+
+  useEffect(() => {
+    localStorage.setItem('beza_shortcut', shortcutKey)
+  }, [shortcutKey])
+
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
@@ -1377,25 +1397,6 @@ function Dashboard({ session }) {
     setSavingHours(false)
   }
 
-  // ─── Personalizações ───────────────────────────────────────────────────────
-  const [theme, setTheme] = useState(() => localStorage.getItem('beza_theme') || 'system')
-  const [timezone, setTimezone] = useState(() => localStorage.getItem('beza_tz') || Intl.DateTimeFormat().resolvedOptions().timeZone)
-  const [shortcutKey, setShortcutKey] = useState(() => localStorage.getItem('beza_shortcut') || 't')
-  const [listeningShortcut, setListeningShortcut] = useState(false)
-
-  useEffect(() => {
-    if (theme === 'system') document.documentElement.removeAttribute('data-theme')
-    else document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('beza_theme', theme)
-  }, [theme])
-
-  useEffect(() => {
-    localStorage.setItem('beza_tz', timezone)
-  }, [timezone])
-
-  useEffect(() => {
-    localStorage.setItem('beza_shortcut', shortcutKey)
-  }, [shortcutKey])
 
   const [avatarUrl, setAvatarUrl] = useState(session.user.user_metadata?.avatar_url || null)
   const avatarInputRef = useRef(null)
