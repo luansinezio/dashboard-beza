@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase.js'
 
+// ─── Hook: bloqueia scroll do body enquanto modal está aberto ────────────────
+const useScrollLock = () => {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+}
+
 // ─── Utilitários de data ────────────────────────────────────────────────────
 const toDateStr = (date) => date.toISOString().split('T')[0]
 const today = () => toDateStr(new Date())
@@ -329,6 +338,7 @@ const CapacityBar = ({ tasks, workMinutes = 8 * 60 }) => {
 
 // ─── Componente: Modal de adição/edição de tarefa ──────────────────────────
 const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, onEditCategory, onDeleteCategory }) => {
+  useScrollLock()
   const [title, setTitle] = useState(task?.title || '')
   const [categoryId, setCategoryId] = useState(task?.category_id || '')
   const [minutes, setMinutes] = useState(task?.estimated_minutes || 60)
@@ -377,7 +387,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease', maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4, cursor: 'pointer' }}>
@@ -908,6 +918,7 @@ const LABEL_COLORS = [
 
 // ─── Modal de criação de label ────────────────────────────────────────────────
 const CategoryModal = ({ onSave, onClose }) => {
+  useScrollLock()
   const [name, setName] = useState('')
   const [color, setColor] = useState('#3b82f6')
   const [saving, setSaving] = useState(false)
@@ -937,6 +948,7 @@ const CategoryModal = ({ onSave, onClose }) => {
         width: '100%', maxWidth: 360,
         boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
         animation: 'modalIn 0.18s ease',
+        maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nova label</div>
@@ -1016,6 +1028,7 @@ const CategoryModal = ({ onSave, onClose }) => {
 // ─── Dashboard (app principal autenticado) ──────────────────────────────────
 // ─── Realocar Modal ───────────────────────────────────────────────────────────
 const ReallocateModal = ({ task, onMove, onClose }) => {
+  useScrollLock()
   const [customDate, setCustomDate] = useState('')
   const dateInputRef = useRef(null)
   const quickOptions = [
@@ -1037,6 +1050,7 @@ const ReallocateModal = ({ task, onMove, onClose }) => {
         width: '100%', maxWidth: 380,
         boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
         animation: 'modalIn 0.18s ease',
+        maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
@@ -1142,6 +1156,7 @@ const UndoToast = ({ toast, onUndo }) => {
 
 // ─── Delete Confirm Modal ─────────────────────────────────────────────────────
 const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
+  useScrollLock()
   const [neverAsk, setNeverAsk] = useState(false)
   return (
     <div onClick={onCancel} style={{
