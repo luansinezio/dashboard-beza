@@ -31,7 +31,7 @@
   --modal-bg: rgba(23, 23, 28, 0.9);
   --modal-input-bg: rgba(255, 255, 255, 0.10);
   --modal-input-border: rgba(255, 255, 255, 0.14);
-  --modal-overlay: rgba(0, 0, 0, 0.25);
+  --modal-overlay: rgba(0, 0, 0, 0.45);
   --modal-radius: 16px;
   --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.22) inset, 0 4px 14px rgba(59,130,246,0.35);
 }
@@ -59,7 +59,7 @@
     --modal-bg: rgba(255, 255, 255, 0.9);
     --modal-input-bg: rgba(0, 0, 0, 0.05);
     --modal-input-border: rgba(0, 0, 0, 0.12);
-    --modal-overlay: rgba(0, 0, 0, 0.16);
+    --modal-overlay: rgba(0, 0, 0, 0.35);
     --modal-radius: 16px;
     --btn-glass-shadow: 0 0 0 1px rgba(255,255,255,0.4) inset, 0 4px 14px rgba(59,130,246,0.25);
   }
@@ -92,22 +92,14 @@ body {
 
 /* ─── CLASSE GLASS ───────────────────────────────────────────────────────── */
 .glass {
-  /* backdrop-filter removido dos cards para reduzir GPU — visual mantido via box-shadow */
   border-color: var(--glass-border) !important;
   box-shadow: var(--glass-shadow) !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.glass:hover {
-  box-shadow: var(--glass-shadow-hover) !important;
-}
-
-/* Header sticky — blur reduzido de 40px → 16px */
+/* Header sticky — backdrop-filter removido, profundidade via shadow */
 .glass-header {
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
   border-bottom-color: var(--glass-border) !important;
-  box-shadow: 0 1px 0 var(--glass-border), 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 0 var(--glass-border), 0 4px 24px rgba(0, 0, 0, 0.18);
 }
 
 /* Modal overlay com leve blur */
