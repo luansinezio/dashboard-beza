@@ -272,14 +272,13 @@ const LoginScreen = () => {
 // ─── Componente: Badge de categoria ────────────────────────────────────────
 const CategoryBadge = ({ category }) => {
   if (!category) return null
+  const { bg, fg } = getCatStyle(category.color)
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '2px 8px', borderRadius: 999,
+      display: 'inline-flex', alignItems: 'center',
+      padding: '2px 9px', borderRadius: 6,
       fontSize: 11, fontWeight: 500,
-      backgroundColor: category.color + '22',
-      color: category.color,
-      border: `1px solid ${category.color}44`,
+      backgroundColor: bg, color: fg,
     }}>
       {category.name}
     </span>
@@ -348,6 +347,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   const [catOptionsId, setCatOptionsId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
+  const [catOptPos, setCatOptPos] = useState({ top: 0, left: 0 })
   const triggerRef = useRef(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
@@ -416,13 +416,13 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
               >
                 {(() => {
                   const cat = categories.find(c => c.id === categoryId)
-                  return cat ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '2px 10px', borderRadius: 100, background: (cat.color || '#666') + '22', color: cat.color || '#666', fontSize: 13, fontWeight: 500, border: `1px solid ${(cat.color || '#666')}33` }}>
+                  if (!cat) return <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Sem categoria</span>
+                  const { bg: tBg, fg: tFg } = getCatStyle(cat.color)
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 6, background: tBg, color: tFg, fontSize: 13, fontWeight: 500 }}>
                       {cat.name}
                       <span onClick={e => { e.stopPropagation(); setCategoryId('') }} style={{ opacity: 0.55, cursor: 'pointer', lineHeight: 1, fontSize: 14, marginLeft: 2 }}>×</span>
                     </span>
-                  ) : (
-                    <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Sem categoria</span>
                   )
                 })()}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ opacity: 0.45, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
@@ -470,7 +470,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                           >
                             {/* Pill clicável */}
                             <div onClick={() => { setCategoryId(c.id); setDropdownOpen(false); setSearchQuery(''); setCatOptionsId(null) }} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', overflow: 'hidden' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 11px', borderRadius: 100, background: (c.color || '#666') + '22', color: c.color || '#666', fontSize: 13, fontWeight: 500, border: `1px solid ${(c.color || '#666')}33`, whiteSpace: 'nowrap' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 11px', borderRadius: 6, background: getCatStyle(c.color).bg, color: getCatStyle(c.color).fg, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}>
                                 {c.name}
                               </span>
                               {categoryId === c.id && (
@@ -482,28 +482,28 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                             {/* Botão ··· — sem borda, hover mais escuro */}
                             <button
                               className="dots-btn"
-                              onClick={e => { e.stopPropagation(); if (catOptionsId === c.id) { setCatOptionsId(null) } else { setCatOptionsId(c.id); setEditName(c.name); setEditColor(c.color || '#3b82f6') } }}
+                              onClick={e => { e.stopPropagation(); if (catOptionsId === c.id) { setCatOptionsId(null) } else { const r = e.currentTarget.getBoundingClientRect(); const fitsR = r.right + 12 + 260 < window.innerWidth - 8; setCatOptPos(fitsR ? { top: r.top, left: r.right + 8 } : { top: r.bottom + 4, left: Math.max(8, r.left - 260) }); setCatOptionsId(c.id); setEditName(c.name); setEditColor(c.color || LABEL_COLORS_NAMED[6].fg) } }}
                               onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover-deep)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                               style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px 9px', borderRadius: 6, opacity: catOptionsId === c.id ? 1 : 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 15, letterSpacing: 2, lineHeight: 1 }}
                             >···</button>
                           </div>
 
-                          {/* Painel de opções inline */}
+                          {/* Painel de opções — position: fixed à DIREITA do ··· */}
                           {catOptionsId === c.id && (
-                            <div onClick={e => e.stopPropagation()} style={{ margin: '2px 8px 6px 8px', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 10, padding: '12px' }}>
+                            <div onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: catOptPos.top, left: catOptPos.left, zIndex: 2100, width: 256, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, padding: '14px', boxShadow: '0 12px 40px rgba(0,0,0,0.28)', animation: 'modalIn 0.12s ease' }}>
                               {/* Rename */}
                               <input
                                 autoFocus
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e); if (e.key === 'Escape') setCatOptionsId(null) }}
-                                style={{ width: '100%', background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }}
+                                style={{ width: '100%', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }}
                               />
                               <button
                                 onClick={saveEditCat}
                                 disabled={!editName.trim() || savingEdit}
-                                style={{ width: '100%', padding: '6px', background: editName.trim() ? 'var(--accent)' : 'transparent', border: 'none', borderRadius: 7, color: editName.trim() ? '#fff' : 'var(--text-muted)', fontSize: 12, fontWeight: 700, cursor: editName.trim() ? 'pointer' : 'default', marginBottom: 8 }}
+                                style={{ width: '100%', padding: '7px', background: editName.trim() ? 'var(--accent)' : 'transparent', border: 'none', borderRadius: 7, color: editName.trim() ? '#fff' : 'var(--text-muted)', fontSize: 13, fontWeight: 700, cursor: editName.trim() ? 'pointer' : 'default', marginBottom: 8 }}
                               >{savingEdit ? '…' : 'Salvar nome'}</button>
                               {/* Excluir */}
                               <button onClick={e => deleteCat(e, c.id)} style={{ width: '100%', padding: '7px 10px', background: 'none', border: '1px solid #ef444430', borderRadius: 7, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 10 }}>
@@ -512,19 +512,19 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                                 </svg>
                                 Excluir
                               </button>
-                              {/* Paleta com nomes */}
+                              {/* Paleta Notion com bg pastel */}
                               <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Cores</div>
-                              {LABEL_COLORS_NAMED.map(({ hex, name: colorName }) => (
+                              {LABEL_COLORS_NAMED.map(({ fg: cFg, bg: cBg, name: colorName }) => (
                                 <div
-                                  key={hex}
-                                  onClick={() => { setEditColor(hex); onEditCategory?.(c.id, { name: editName.trim() || c.name, color: hex }) }}
+                                  key={cFg}
+                                  onClick={() => { setEditColor(cFg); onEditCategory?.(c.id, { name: editName.trim() || c.name, color: cFg }) }}
                                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 6px', borderRadius: 7, cursor: 'pointer' }}
-                                  onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover-deep)'}
+                                  onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
                                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                 >
-                                  <span style={{ width: 18, height: 18, borderRadius: 4, background: hex, flexShrink: 0 }} />
+                                  <span style={{ width: 20, height: 20, borderRadius: 5, background: cBg, border: `2px solid ${cFg}55`, flexShrink: 0 }} />
                                   <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>{colorName}</span>
-                                  {editColor === hex && (
+                                  {editColor === cFg && (
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: 'var(--accent)' }}>
                                       <polyline points="20 6 9 17 4 12"/>
                                     </svg>
@@ -932,33 +932,33 @@ const OnboardingScreen = ({ session, onComplete }) => {
   )
 }
 
-// ─── Paleta de cores para labels ─────────────────────────────────────────────
-const LABEL_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#84cc16',
-  '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899',
-  '#14b8a6', '#f43f5e', '#64748b', '#a16207',
+// ─── Paleta Notion (pastel bg + fg escuro) ───────────────────────────────────
+const LABEL_COLORS_NAMED = [
+  { name: 'Padrão',   fg: '#9b9a97', bg: '#f1f1ef' },
+  { name: 'Cinza',    fg: '#787774', bg: '#e3e2e0' },
+  { name: 'Marrom',   fg: '#9f6b53', bg: '#f4e1d5' },
+  { name: 'Laranja',  fg: '#d9730d', bg: '#fadec9' },
+  { name: 'Amarelo',  fg: '#cb912f', bg: '#fdecc8' },
+  { name: 'Verde',    fg: '#448361', bg: '#dbeddb' },
+  { name: 'Azul',     fg: '#337ea9', bg: '#d3e5ef' },
+  { name: 'Roxo',     fg: '#9065b0', bg: '#e8deee' },
+  { name: 'Rosa',     fg: '#c14f8c', bg: '#f5e0e9' },
+  { name: 'Vermelho', fg: '#d44c47', bg: '#ffe2dd' },
 ]
 
-const LABEL_COLORS_NAMED = [
-  { hex: '#64748b', name: 'Cinza' },
-  { hex: '#a16207', name: 'Marrom' },
-  { hex: '#f97316', name: 'Laranja' },
-  { hex: '#f59e0b', name: 'Amarelo' },
-  { hex: '#84cc16', name: 'Verde limão' },
-  { hex: '#22c55e', name: 'Verde' },
-  { hex: '#3b82f6', name: 'Azul' },
-  { hex: '#8b5cf6', name: 'Roxo' },
-  { hex: '#ec4899', name: 'Rosa' },
-  { hex: '#ef4444', name: 'Vermelho' },
-  { hex: '#14b8a6', name: 'Teal' },
-  { hex: '#f43f5e', name: 'Rosa vivo' },
-]
+// Dado o `color` armazenado (fg), retorna { bg, fg } para renderização correta
+const getCatStyle = (color) => {
+  const found = LABEL_COLORS_NAMED.find(c => c.fg === color)
+  return found
+    ? { bg: found.bg, fg: found.fg }
+    : { bg: (color || '#787774') + '33', fg: color || '#787774' }
+}
 
 // ─── Modal de criação de label ────────────────────────────────────────────────
 const CategoryModal = ({ onSave, onClose }) => {
   useScrollLock()
   const [name, setName] = useState('')
-  const [color, setColor] = useState('#3b82f6')
+  const [color, setColor] = useState(LABEL_COLORS_NAMED[6].fg) // Azul padrão
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
@@ -1007,38 +1007,40 @@ const CategoryModal = ({ onSave, onClose }) => {
           />
         </div>
 
-        <div style={{ marginBottom: name.trim() ? 18 : 24 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, display: 'block' }}>Cor</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {LABEL_COLORS.map(c => (
+        <div style={{ marginBottom: name.trim() ? 12 : 24 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>Cor</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {LABEL_COLORS_NAMED.map(({ fg, bg, name: colorName }) => (
               <div
-                key={c}
-                onClick={() => setColor(c)}
-                style={{
-                  width: 28, height: 28, borderRadius: '50%', background: c, cursor: 'pointer',
-                  outline: color === c ? `3px solid ${c}` : '3px solid transparent',
-                  outlineOffset: 2, transition: 'outline 0.12s',
-                  boxShadow: color === c ? `0 0 0 1px rgba(0,0,0,0.15)` : 'none',
-                }}
-              />
+                key={fg}
+                onClick={() => setColor(fg)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', background: color === fg ? 'var(--modal-input-bg)' : 'transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}
+                onMouseLeave={e => e.currentTarget.style.background = color === fg ? 'var(--modal-input-bg)' : 'transparent'}
+              >
+                <span style={{ width: 20, height: 20, borderRadius: 5, background: bg, border: `2px solid ${fg}55`, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>{colorName}</span>
+                {color === fg && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: 'var(--accent)' }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </div>
             ))}
           </div>
         </div>
 
-        {name.trim() && (
-          <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Prévia:</span>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              padding: '2px 8px', borderRadius: 999,
-              fontSize: 11, fontWeight: 500,
-              backgroundColor: color + '22', color,
-              border: `1px solid ${color}44`,
-            }}>
-              {name}
-            </span>
-          </div>
-        )}
+        {name.trim() && (() => {
+          const { bg: pBg, fg: pFg } = getCatStyle(color)
+          return (
+            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Prévia:</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500, backgroundColor: pBg, color: pFg }}>
+                {name}
+              </span>
+            </div>
+          )
+        })()}
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{
