@@ -347,6 +347,8 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [catOptionsId, setCatOptionsId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
+  const triggerRef = useRef(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
@@ -402,7 +404,14 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
 
               {/* ── Trigger ── */}
               <div
-                onClick={() => { setDropdownOpen(o => !o); if (dropdownOpen) { setSearchQuery(''); setCatOptionsId(null) } }}
+                ref={triggerRef}
+                onClick={() => {
+                  if (!dropdownOpen) {
+                    const rect = triggerRef.current?.getBoundingClientRect()
+                    if (rect) setDropPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+                  } else { setSearchQuery(''); setCatOptionsId(null) }
+                  setDropdownOpen(o => !o)
+                }}
                 style={{ ...inputStyle, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, userSelect: 'none', minHeight: 40 }}
               >
                 {(() => {
@@ -421,14 +430,14 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                 </svg>
               </div>
 
-              {/* ── Dropdown ── */}
+              {/* ── Dropdown (position: fixed — escapa do modal) ── */}
               {dropdownOpen && (
                 <>
                   <div onClick={() => { setDropdownOpen(false); setSearchQuery(''); setCatOptionsId(null) }} style={{ position: 'fixed', inset: 0, zIndex: 1500 }} />
-                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 2000, background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.22)', animation: 'modalIn 0.12s ease' }}>
+                  <div style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 2000, background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.28)', animation: 'modalIn 0.12s ease' }}>
 
                     {/* Busca / criar */}
-                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--modal-input-border)' }}>
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--modal-input-border)', background: 'var(--dropdown-bg)' }}>
                       <input
                         autoFocus
                         value={searchQuery}
@@ -446,7 +455,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                     </div>
 
                     {/* Lista */}
-                    <div style={{ maxHeight: 260, overflowY: 'auto', padding: '6px 0' }}>
+                    <div style={{ maxHeight: 280, overflowY: 'auto', padding: '6px 0' }}>
                       {filteredCats.length === 0 && !searchQuery.trim() && (
                         <div style={{ padding: '8px 14px', fontSize: 13, color: 'var(--text-muted)' }}>Nenhuma label criada ainda</div>
                       )}
@@ -455,8 +464,8 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                         <div key={c.id}>
                           {/* Linha da label */}
                           <div
-                            style={{ display: 'flex', alignItems: 'center', padding: '5px 10px 5px 12px', gap: 6 }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--modal-input-bg)'; const btn = e.currentTarget.querySelector('.dots-btn'); if (btn) btn.style.opacity = '1' }}
+                            style={{ display: 'flex', alignItems: 'center', padding: '5px 8px 5px 12px', gap: 6 }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--dropdown-hover)'; const btn = e.currentTarget.querySelector('.dots-btn'); if (btn) btn.style.opacity = '1' }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; const btn = e.currentTarget.querySelector('.dots-btn'); if (btn) btn.style.opacity = catOptionsId === c.id ? '1' : '0' }}
                           >
                             {/* Pill clicável */}
@@ -470,24 +479,26 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                                 </svg>
                               )}
                             </div>
-                            {/* Botão ··· */}
+                            {/* Botão ··· — sem borda, hover mais escuro */}
                             <button
                               className="dots-btn"
                               onClick={e => { e.stopPropagation(); if (catOptionsId === c.id) { setCatOptionsId(null) } else { setCatOptionsId(c.id); setEditName(c.name); setEditColor(c.color || '#3b82f6') } }}
-                              style={{ background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 8px', borderRadius: 6, opacity: catOptionsId === c.id ? 1 : 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 15, letterSpacing: 2, lineHeight: 1 }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover-deep)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px 9px', borderRadius: 6, opacity: catOptionsId === c.id ? 1 : 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 15, letterSpacing: 2, lineHeight: 1 }}
                             >···</button>
                           </div>
 
                           {/* Painel de opções inline */}
                           {catOptionsId === c.id && (
-                            <div onClick={e => e.stopPropagation()} style={{ margin: '2px 8px 6px 8px', background: 'var(--modal-input-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 10, padding: '12px' }}>
+                            <div onClick={e => e.stopPropagation()} style={{ margin: '2px 8px 6px 8px', background: 'var(--dropdown-hover)', border: '1px solid var(--modal-input-border)', borderRadius: 10, padding: '12px' }}>
                               {/* Rename */}
                               <input
                                 autoFocus
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') saveEditCat(e); if (e.key === 'Escape') setCatOptionsId(null) }}
-                                style={{ width: '100%', background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }}
+                                style={{ width: '100%', background: 'var(--dropdown-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }}
                               />
                               <button
                                 onClick={saveEditCat}
@@ -508,7 +519,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                                   key={hex}
                                   onClick={() => { setEditColor(hex); onEditCategory?.(c.id, { name: editName.trim() || c.name, color: hex }) }}
                                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 6px', borderRadius: 7, cursor: 'pointer' }}
-                                  onMouseEnter={e => e.currentTarget.style.background = 'var(--modal-bg)'}
+                                  onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover-deep)'}
                                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                 >
                                   <span style={{ width: 18, height: 18, borderRadius: 4, background: hex, flexShrink: 0 }} />
@@ -530,24 +541,11 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                         <div
                           onClick={() => { setDropdownOpen(false); setSearchQuery(''); onRequestNewCategory?.() }}
                           style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--accent)', fontWeight: 500, borderTop: filteredCats.length ? '1px solid var(--modal-input-border)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--dropdown-hover)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                           Criar "{searchQuery.trim()}"
-                        </div>
-                      )}
-
-                      {/* Nova label (sem busca ativa) */}
-                      {!searchQuery.trim() && (
-                        <div
-                          onClick={() => { setDropdownOpen(false); onRequestNewCategory?.() }}
-                          style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--accent)', fontWeight: 500, borderTop: '1px solid var(--modal-input-border)', display: 'flex', alignItems: 'center', gap: 6 }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--modal-input-bg)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                          Nova label
                         </div>
                       )}
                     </div>
