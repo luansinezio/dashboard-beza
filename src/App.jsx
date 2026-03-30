@@ -1668,7 +1668,7 @@ function Dashboard({ session }) {
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'block' }}>Horas de trabalho por dia</label>
                     <div style={{ textAlign: 'center', marginBottom: 10 }}>
-                      <span style={{ fontSize: 38, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{hoursEdit}</span>
+                      <span style={{ fontSize: 27, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{hoursEdit}</span>
                       <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 5 }}>horas</span>
                       {savingHours && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>Salvando…</span>}
                     </div>
