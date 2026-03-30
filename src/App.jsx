@@ -386,7 +386,7 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, display: 'block', fontWeight: 700 }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', backdropFilter: 'blur(8px) saturate(140%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--modal-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--modal-bg)', border: '1px solid var(--modal-input-border)', borderRadius: 'var(--modal-radius)', padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', animation: 'modalIn 0.18s ease', maxHeight: 'calc(100dvh - 40px)', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{task ? 'Editar tarefa' : 'Nova tarefa'}</h3>
