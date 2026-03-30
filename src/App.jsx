@@ -454,8 +454,8 @@ const TaskModal = ({ task, categories, onSave, onClose, onRequestNewCategory, on
                       />
                     </div>
 
-                    {/* Lista */}
-                    <div style={{ maxHeight: 280, overflowY: 'auto', padding: '6px 0' }}>
+                    {/* Lista — cresce naturalmente; scroll só se não couber na viewport */}
+                    <div style={{ maxHeight: `calc(100dvh - ${dropPos.top + 90}px)`, overflowY: 'auto', padding: '6px 0' }}>
                       {filteredCats.length === 0 && !searchQuery.trim() && (
                         <div style={{ padding: '8px 14px', fontSize: 13, color: 'var(--text-muted)' }}>Nenhuma label criada ainda</div>
                       )}
